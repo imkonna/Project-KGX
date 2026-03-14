@@ -1,0 +1,28 @@
+Tentative Timeline
+
+Week 1–2:
+Literature review on molecular binding prediction, graph neural networks, and geometric deep learning. Final selection of target protein and dataset.
+
+Week 3–4:
+Dataset curation and preprocessing. Construction of baseline molecular representations and implementation of classical machine learning baselines.
+
+Week 5–6:
+Implementation of graph neural network models for molecular binding prediction.
+
+Week 7–8:
+Implementation of geometry-aware / 3D molecular models, depending on feasibility and dataset support.
+
+Week 9:
+Model training and evaluation under controlled experimental settings.
+
+Week 10:
+Comparative analysis of baseline, graph-based, and geometric models.
+
+Week 11:
+Additional experiments, ablations, or robustness checks, if time permits.
+
+Week 12:
+Interpretation of results and preparation of figures/tables.
+
+Week 13:
+Final report writing and preparation of presentation.
