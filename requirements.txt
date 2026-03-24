@@ -15,6 +15,7 @@ fuzzywuzzy>=0.18
 python-Levenshtein>=0.20
 openpyxl>=3.0
 huggingface_hub>=0.20
+tiledbsoma
 
 # Experiment tracking
 mlflow>=2.10
