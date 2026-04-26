@@ -1,3 +1,6 @@
 .venv/*
 data/*
 plots/*
+results/*
+models/*
+docs/experiment_progression.md
