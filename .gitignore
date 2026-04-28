@@ -1,3 +1,6 @@
 .venv/*
 data/*
 plots/*
+
+# Ignore environment variables file
+.env
