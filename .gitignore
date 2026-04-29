@@ -3,4 +3,6 @@ data/*
 plots/*
 results/*
 models/*
-docs/experiment_progression.md
+
+# Ignore environment variables file
+.env
