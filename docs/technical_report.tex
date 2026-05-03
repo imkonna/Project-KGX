@@ -8,6 +8,7 @@
 \usepackage{amsmath,amssymb,graphicx,booktabs,float,subcaption}
 \usepackage{hyperref,listings,xcolor,multirow,array,enumitem}
 \usepackage[left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}
+\graphicspath{{figures/}}
 
 \lstdefinestyle{mystyle}{
     backgroundcolor=\color{white},
@@ -17,14 +18,14 @@
 }
 \lstset{style=mystyle}
 
-\title{Graph Neural Networks for Predicting Drug Safety Properties\\[0.3em]
+\title{Graph and Geometric Deep Learning for Predicting Drug Safety Properties\\[0.3em]
 \large Mid-Term Progress Report}
 \author{
 \gr{Κωνσταντίνα Πάσχου} \and
 \gr{Γεώργιος Κεσογλίδης} \and
 \gr{Θεοχάρης Αγγελίδης}\\[0.4em]
 \small Course: Advanced Topics in Machine Learning\\
-\small MSc Artificial Intelligence --- Aristotle University of Thessaloniki
+\small MSc Artificial Intelligence, Aristotle University of Thessaloniki
 }
 \date{April 2026}
 
@@ -32,90 +33,165 @@
 \maketitle
 
 \begin{abstract}
-We investigated whether Graph Neural Networks provide an advantage over traditional fingerprint-based methods for drug toxicity prediction. We tested three representation strategies (Morgan fingerprints, RDKit descriptors, ChemBERTa) and four GNN architectures (GCN, GIN, GAT, GraphSAGE) across six toxicity datasets and twelve Tox21 endpoints (17 tasks total). On balanced datasets, classical ML with fingerprints and GNNs achieve comparable performance (0.79--0.92 AUROC). On severely imbalanced datasets (ClinTox 8\% positive, Tox21 3--15\%), all methods plateau around 0.79 AUROC for fingerprints and 0.54 AUROC for GNNs. Regression on LD50 shows fingerprints ($R^2 = 0.60$) outperform GNNs ($R^2 = 0.49$). The central finding: representation choice does not determine performance on imbalanced toxicity datasets. Class imbalance itself emerges as the limiting factor, not algorithm design. The next phase tests whether combining data-side interventions (rejection sampling) with GNNs can break this imbalance ceiling.
+We study graph neural networks for drug safety prediction. The proposal asked whether GNNs outperform classical fingerprint baselines on a pharmaceutical task. We narrowed the application from drug-target binding to drug toxicity, built a five-level baseline ladder, and ran four GNN architectures in two configurations across six toxicity datasets and twelve Tox21 endpoints. GIN is the strongest GNN, and after a v2 upgrade (richer atom features, higher capacity, class-weighted loss) it matches fingerprints on the small or severely imbalanced classification tasks but trails on the balanced ones and on LD50 regression. Loss-side imbalance fixes inside the GNN training outperform data-side fixes (rejection sampling, SMOTE) on the classical baselines. The final phase hardens the GNN (bond-level edge features, scaffold splits with multiple seeds, focal loss for the one architecture that regressed under aggressive class weights) and takes the hardened GIN drug encoder to drug-target interaction on DAVIS, the regime where the protein partner cannot be Morgan-fingerprinted. A 3D-geometric GNN on LD50 (SchNet, Level 4) is a stretch goal.
 \end{abstract}
 
-\tableofcontents
-\newpage
+% =============================================================================
+\section{Introduction}
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{Introduction and Scope}
+\subsection{Research question}
 
-Drug development is expensive and slow. A typical small-molecule program costs \$1--2 billion and takes 10--15 years, with over 90\% of candidates failing in clinical trials. Predicting toxicity computationally before synthesis could substantially reduce both timelines and costs.
+Drug development is dominated by attrition. Most candidate molecules fail in clinical trials, and a substantial fraction of those failures are toxicity-driven. Predicting safety from molecular structure alone has direct economic and ethical value, and the same modelling tools transfer to drug-target interaction (DTI), where the original proposal aimed.
 
-Molecular property prediction has traditionally used hand-engineered descriptors such as LogP and TPSA, or structural fingerprints like Morgan/ECFP~\cite{chemrev}. Recently, Graph Neural Networks~\cite{kipf2017,xu2019,velickovic2018,hamilton2017} have shown promise on other molecular tasks. The central question we investigate is whether representation choice matters when the real constraint is data imbalance. Most real toxicity datasets are severely imbalanced: 8\% toxic in ClinTox, 3--15\% positive in Tox21 endpoints. Do better representations (learned embeddings, graphs) overcome class imbalance, or does imbalance itself become the ceiling regardless of representation?
+The proposal asked: \emph{do graph-based and geometry-aware representations of molecules provide a meaningful advantage over classical descriptor-based baselines on a pharmaceutical prediction task?} The task was originally drug-target binding for a single protein. We refined it to drug toxicity because the Therapeutics Data Commons benchmarks~\cite{huang2021} provide mature toxicity datasets with standardised splits and the methodological question transfers cleanly. DTI on DAVIS and KIBA is already loaded in the pipeline and is the planned target of the final phase (\S\ref{sec:nextsteps}). This report is a mid-term checkpoint: it documents the exploration, defines the problem precisely, and motivates the final-phase plan.
 
-We investigate this question across six toxicity datasets and twelve Tox21 endpoints through three parallel experimental investigations.
+Going in, we expect graph representations to preserve more relevant structural information than fixed-length fingerprints, particularly around ring systems, hydrogen bonding, and stereochemistry. Classical fingerprint baselines should be hard to beat on small datasets and on highly imbalanced tasks, where flexible models risk overfitting the minority class. Whether a GNN advantage emerges on DTI, where the protein cannot be reduced to a fingerprint, is the open question.
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{Datasets and Experimental Design}
+\subsection{Baseline hierarchy}
 
-\subsection{Domain Context: Drug Toxicity Prediction}
-
-Drug toxicity prediction is fundamentally a class imbalance problem. A typical toxicity dataset contains thousands of non-toxic molecules and a small set of toxic ones. For example, ClinTox has 1,130 molecules with only 92 toxic (8\% positive), and Tox21 endpoints range from 3--15\% positive. This imbalance challenges all machine learning methods: a model that always predicts "non-toxic" achieves 92\% accuracy on ClinTox despite being useless.
-
-\subsection{Molecular Representations}
-
-All methods begin with SMILES strings, a text notation for molecular structure. The choice of representation fundamentally determines what information the model can access.
-
-Fingerprints (Morgan/ECFP4) compress molecules into fixed-length binary vectors. Each bit represents whether a specific substructure pattern appears. With 1024 bits and radius 2, they capture local structural patterns. RDKit 2D descriptors encode hand-engineered scalar properties: molecular weight, LogP, TPSA, H-bond counts. These fixed-vector representations have dominated toxicity prediction for decades.
-
-Graph representations preserve molecular structure as explicit nodes (atoms) and edges (bonds). SMILES are parsed into molecular graphs where nodes carry learned features (atomic number, formal charge, H-count, hybridization, aromaticity, ring membership, valence, radical electrons). Graphs are variable-size: the same model applies to molecules with 10 atoms or 100 atoms. Graph Neural Networks learn how molecular properties relate to toxicity directly from data.
-
-Pre-trained language models (ChemBERTa) treat SMILES as text sequences. ChemBERTa uses a RoBERTa backbone pre-trained on 77 million SMILES strings, then fine-tuned for specific toxicity tasks. This approach combines the benefits of large-scale pre-training with task-specific adaptation.
-
-\subsection{Evaluation Protocol}
-
-All experiments use scaffold-based splits provided by Therapeutics Data Commons. Scaffold splits group molecules by their core chemical structure, ensuring test molecules are structurally different from training examples. This prevents inflated performance from similar molecules leaking across train/test splits.
-
-Standard metrics are used throughout: ROC-AUC (threshold-independent, handles imbalance correctly), F1 (shows whether models predict the minority class), and R² (for regression tasks). Models are evaluated on fixed 0.5 threshold and calibrated thresholds (set to the positive-class ratio, e.g., 0.08 for ClinTox). This distinction matters: fixed 0.5 often causes F1 collapse on imbalanced data, while calibrated thresholds recover it.
-
-\subsection{Datasets}
-
-This work evaluates on six toxicity datasets from Therapeutics Data Commons (TDC)~\cite{huang2021} plus twelve Tox21 binary classification endpoints (17 tasks total):
-
-\begin{itemize}
-    \item \textbf{AMES} (Salmonella mutagenicity): 7,255 molecules, 50\% positive. Balanced classification.
-    \item \textbf{hERG\_Karim} (cardiac arrhythmia risk): 13,445 molecules, 40\% positive. Moderate class balance.
-    \item \textbf{ClinTox} (clinical trial outcomes): 1,484 molecules, 8\% positive. Severe imbalance.
-    \item \textbf{DILI} (drug-induced liver injury): 475 molecules, 45\% positive. Balanced but small.
-    \item \textbf{LD50\_Zhu} (acute systemic toxicity): 7,385 molecules, continuous regression target. No class labels.
-    \item \textbf{Tox21} (nuclear receptor / stress-response assays): 7,831 molecules, 12 binary endpoints, 3--15\% positive each.
-\end{itemize}
-
-% ─────────────────────────────────────────────────────────────────────────────
-\section{Results and Analysis}
-
-\subsection{Baseline Performance: Classical ML with Fingerprints}
-
-We establish the performance ceiling for hand-engineered features by testing Random Forest and XGBoost with Morgan fingerprints (ECFP4) on all six toxicity datasets. These results answer the first question: what is the benchmark any learned representation must beat?
+Following the structure used in our own \texttt{baselines\_ames.ipynb}, the project is organised as a five-level hierarchy. Each level is meant to answer one specific question, and each level must beat the previous one to justify itself.
 
 \begin{table}[H]
 \centering
-\caption{Classical ML with Morgan fingerprints: Random Forest and XGBoost across all six toxicity datasets.}
-\label{tab:baseline_classical}
-\begin{tabular}{lrr}
+\caption{Project baseline hierarchy. The mid-term covers Levels 0 to 3.}
+\label{tab:hierarchy}
+\begin{tabular}{clll}
 \toprule
-\textbf{Dataset} & \textbf{RF AUROC} & \textbf{XGB AUROC} \\
+\textbf{Level} & \textbf{Model class} & \textbf{Representation} & \textbf{Status} \\
 \midrule
-AMES (50\% pos) & 0.906 & 0.881 \\
-hERG\_Karim (40\% pos) & 0.920 & 0.897 \\
-ClinTox (8\% pos) & 0.792 & 0.870 \\
-DILI (45\% pos) & 0.868 & — \\
-Tox21 (macro, 3--15\%) & 0.776 & 0.803 \\
-\midrule
-\multicolumn{3}{c}{\textbf{Regression}} \\
-\midrule
-LD50\_Zhu & \multicolumn{2}{c}{$R^2 = 0.58$ (RF), $R^2 = 0.60$ (XGB)} \\
+0 & majority-class / random          & none                       & complete \\
+1 & RF, XGBoost                      & Morgan FP, RDKit 2D        & complete \\
+2 & ChemBERTa (frozen + head)        & SMILES tokens (PLM)        & complete (AMES only) \\
+3 & GCN, GIN, GAT, GraphSAGE         & molecular graph (2D)       & complete (v1, v2) \\
+4 & SchNet, DimeNet                  & 3D conformer               & stretch goal (not started) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-On balanced datasets (AMES, hERG), fingerprints achieve 0.91--0.92 AUROC. On severe imbalance (ClinTox 8\%), performance drops to 0.79 AUROC. On regression (LD50), classical ML plateaus at $R^2 = 0.60$. These numbers establish the fingerprint ceiling. Any other representation must beat these benchmarks on at least one metric to claim an advantage.
+This report covers Levels 0 to 3. The class-imbalance interventions (rejection sampling, SMOTE) sit alongside Level 1 as an investigation of why fingerprint baselines lose recall on heavily imbalanced datasets. The final leg extends the strongest pipeline to drug-target interaction (an extension along the dataset axis rather than the representation axis) and, time permitting, attempts Level 4 on LD50.
 
-\subsection{Comparative Analysis of Molecular Representations}
+% =============================================================================
+\section{Datasets and Evaluation}
 
-To explore whether learned representations outperform hand-engineered features, three representation strategies were compared on AMES (balanced, 50\% positive) using scaffold-based splits. AMES provides a clean test case: abundant data, balanced classes, and high chemical diversity. Three representations were tested: Morgan fingerprints (ECFP4, 1024-bit, radius 2), RDKit 2D descriptors (MW, LogP, TPSA, H-bond donors/acceptors), and ChemBERTa (RoBERTa backbone pre-trained on 77M SMILES, fine-tuned with frozen backbone and trainable head).
+\subsection{Datasets}
+
+We use six toxicity datasets from Therapeutics Data Commons (TDC)~\cite{huang2021}. Tox21 is treated as twelve separate single-task endpoints, giving 17 tasks in total (4 binary classification, 1 regression, 12 Tox21 endpoints). Two drug-target interaction datasets (DAVIS and KIBA) are loaded into the same pipeline but reserved for the final leg.
+
+\begin{table}[H]
+\centering
+\caption{Datasets in the project. Positive ratio refers to the toxic (minority) class.}
+\label{tab:datasets}
+\begin{tabular}{llrrl}
+\toprule
+\textbf{Dataset} & \textbf{Task} & \textbf{Size} & \textbf{Pos.\ ratio} & \textbf{Endpoint} \\
+\midrule
+\multicolumn{5}{l}{\textit{Toxicity (mid-term)}} \\
+AMES         & binary classification & 7{,}255  & $\sim$50\% & Salmonella mutagenicity \\
+hERG\_Karim  & binary classification & 13{,}445 & $\sim$40\% & cardiac arrhythmia risk \\
+DILI         & binary classification & 475      & $\sim$45\% & drug-induced liver injury \\
+ClinTox      & binary classification & 1{,}484  & $\sim$8\%  & clinical-trial toxicity failure \\
+LD50\_Zhu    & regression            & 7{,}385  & n/a        & acute lethal dose (log scale) \\
+Tox21 ($\times 12$) & binary, 12 endpoints & $\sim$7{,}831 & 3 to 15\% & nuclear-receptor / stress-response panel \\
+\midrule
+\multicolumn{5}{l}{\textit{Drug-target interaction (final leg)}} \\
+DAVIS        & regression  & 30{,}056 pairs   & n/a   & 68 drugs $\times$ 442 kinase targets, $K_d$ \\
+KIBA         & regression  & 118{,}254 pairs  & n/a   & 2{,}111 drugs $\times$ 229 targets \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The collection deliberately spans size (475 to 13{,}445 molecules), class balance (4\% to 50\% positive), and task type. ClinTox and the lower-prevalence Tox21 endpoints provide the imbalance stress test, AMES and hERG a balanced reference, DILI a small-data corner case, and LD50 the regression task that strains representation quality.
+
+\subsection{Splits and metrics}
+
+Classical baselines and the imbalance experiments use scaffold-based train, validation, and test splits, which group molecules by their core chemical skeleton so that test molecules belong to scaffold families unseen during training. This is the standard generalisation test for molecular property prediction. The GNN runs to date use TDC's deterministic random split, and reconciling both pipelines on scaffold splits is the first item in the final-leg plan.
+
+We report ROC-AUC as the primary classification metric (threshold-independent, robust to imbalance), F1 of the positive class as a secondary metric (it reveals whether the model commits to predictions on the minority class), and $R^2$ and RMSE for LD50 regression. Accuracy is intentionally excluded from comparison: at 4\% prevalence on SR-ATAD5, predicting ``non-toxic'' for everything is 96\% accurate but useless. Where decision thresholds are used (for F1), we report both the default 0.5 cut-off and a calibrated threshold equal to the dataset's positive-class ratio.
+
+% =============================================================================
+\section{Methods}
+
+\subsection{Molecular representations}
+
+Four input representations are compared. \textbf{Morgan fingerprints (ECFP4)} encode each molecule as a 1024-bit vector via RDKit with radius~2~\cite{morgan1965, chemrev}, where each bit flags a circular substructure pattern. This is the QSAR default and the baseline any new method must beat. \textbf{RDKit 2D descriptors} are a small set of hand-engineered global properties (molecular weight, LogP, TPSA, hydrogen-bond donor and acceptor counts) that medicinal chemists routinely inspect but that lose all sub-structural detail. \textbf{ChemBERTa} is a RoBERTa backbone pre-trained on 77 million SMILES strings, used here with the backbone frozen and a small classification head trained on the toxicity label, to test whether large-scale unsupervised pre-training transfers downstream. \textbf{Molecular graphs} are produced by parsing each SMILES into a PyTorch Geometric \texttt{Data} object via RDKit~\cite{fey2019}, with atoms as nodes and bonds as edges in both directions. Atom features are described per GNN configuration in \S\ref{sec:gnn}, and bond-level features are not yet encoded (the edge index carries connectivity only).
+
+\subsection{Classical baselines}
+
+Random Forest (scikit-learn, 500 trees, \texttt{min\_samples\_leaf}=2) and XGBoost (500 estimators, depth 6, learning rate 0.1) are trained on Morgan fingerprints for every classification dataset, on the same input for LD50 regression, and additionally on RDKit 2D descriptors on AMES for the representation comparison.
+
+\subsection{GNN architectures}
+\label{sec:gnn}
+
+All four architectures share an identical skeleton: two convolutional layers, ReLU activation, global pooling over each graph, and a linear output head. Any performance difference is therefore attributable to the aggregation rule. References: GCN~\cite{kipf2017}, GIN~\cite{xu2019}, GAT~\cite{velickovic2018}, GraphSAGE~\cite{hamilton2017}.
+
+\begin{table}[H]
+\centering
+\caption{GNN architectures compared.}
+\label{tab:archs}
+\begin{tabular}{llll}
+\toprule
+\textbf{Model} & \textbf{Aggregation} & \textbf{Pooling} & \textbf{Theoretical property} \\
+\midrule
+GCN       & degree-normalised mean              & mean & symmetric Laplacian smoothing \\
+GIN       & learnable $(1{+}\varepsilon)$-sum + MLP & sum  & as expressive as 1-WL test \\
+GAT       & multi-head attention-weighted mean  & mean & learns per-edge importance \\
+GraphSAGE & concat(self, mean(neighbours))      & mean & inductive generalisation \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We trained each architecture in two configurations. \textbf{v1} uses a minimal 4-feature atom encoding (atomic number, degree, formal charge, aromaticity), hidden dimension 16, learning rate 0.01, and unweighted binary cross-entropy. \textbf{v2} expands the atom encoding to 9 features (adding hydrogen count, ring membership, hybridisation, total valence, and radical electrons), increases hidden dimension to 64, lowers the learning rate to 0.001, and replaces the loss with class-weighted BCE: $\texttt{pos\_weight} = n_{\text{neg}} / n_{\text{pos}}$ computed per dataset from the training split.
+
+% =============================================================================
+\section{Results}
+
+\subsection{Classical baselines (Level 1)}
+\label{sec:cls_baselines}
+
+Random Forest and XGBoost on Morgan fingerprints set the reference performance any learned representation must beat.
+
+\begin{table}[H]
+\centering
+\caption{Classical ML baselines on Morgan fingerprints (scaffold splits).}
+\label{tab:baselines}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Dataset} & \textbf{RF} & \textbf{XGBoost} \\
+\midrule
+AMES (50\% pos)            & 0.906 & 0.881 \\
+hERG\_Karim (40\% pos)     & 0.920 & 0.897 \\
+DILI (45\% pos)            & 0.868 & n/a \\
+ClinTox (8\% pos)          & 0.792 & 0.870 \\
+Tox21 (macro, 3 to 15\% pos) & 0.776 & 0.803 \\
+\midrule
+LD50\_Zhu ($R^2$)          & 0.583 & 0.605 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On balanced classification, fingerprints reach 0.88 to 0.92 AUROC. On severely imbalanced ClinTox, RF drops to 0.79. On LD50 regression, both methods plateau at $R^2 \approx 0.6$, leaving roughly 40\% of the variance in acute toxicity unexplained.
+
+\subsection{Class-imbalance interventions}
+\label{sec:imbalance}
+
+Because over-prediction of the majority class is the most visible failure mode on toxicity data, we tested two standard interventions before moving to GNNs.
+
+\textbf{Cost-proportionate rejection sampling.} A custom meta-estimator computes a per-batch positive-class weight and probabilistically rejects majority-class samples. Under 5-fold cross-validation, mean ROC-AUC dropped to 0.794 on ClinTox and 0.744 on Tox21, a noticeable regression from the unmodified baselines. The cause is information loss: rejecting thousands of non-toxic molecules to match a tiny positive set throws away most of what the trees were learning from.
+
+\textbf{SMOTE oversampling.} XGBoost with SMOTE-balanced training data, evaluated by per-class precision, recall, and F1 under 5-fold CV. Figure~\ref{fig:smote} shows the resulting confusion matrices. On Tox21 the model recovered useful minority-class behaviour (positive-class recall 0.46, F1 0.41). On ClinTox the gain was marginal (recall 0.20, F1 0.20). The asymmetry is informative. When fingerprints already separate the classes well (Tox21, large absolute number of positives), SMOTE helps the decision boundary. When fingerprints lack separating information (ClinTox, only $\sim$119 positives), no resampling can manufacture it.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{smote_comparison.png}
+\caption{Confusion matrices after SMOTE oversampling on the classical XGBoost pipeline. Tox21 (right) recovers a meaningful minority-class signal (125 of 272 toxic captured). ClinTox (left) does not (21 of 103). SMOTE cannot manufacture separating information that the input representation lacks.}
+\label{fig:smote}
+\end{figure}
+
+These results establish the baseline lesson: \emph{imbalance is best addressed inside the loss function, not by mutilating the training set}. This directly motivated the class-weighted-loss choice for GNN~v2 (\S\ref{sec:gnn}).
+
+\subsection{Representation comparison on AMES (Level 2)}
+
+AMES (balanced, 50\% positive, 7{,}255 molecules) provides a clean head-to-head between three input representations: Random Forest on Morgan FP and on RDKit 2D descriptors, plus ChemBERTa with frozen backbone and a trainable head.
 
 \begin{table}[H]
 \centering
@@ -125,166 +201,199 @@ To explore whether learned representations outperform hand-engineered features, 
 \toprule
 \textbf{Representation} & \textbf{Model} & \textbf{AUROC} & \textbf{F1} & \textbf{Accuracy} \\
 \midrule
-Morgan FP (1024-bit) & RF & 0.900 & 0.839 & 0.825 \\
-Morgan FP (1024-bit) & XGB & 0.899 & 0.842 & 0.826 \\
-RDKit 2D descriptors & RF & 0.867 & 0.806 & 0.786 \\
-ChemBERTa (77M pre-trained) & frozen backbone + head & 0.802 & 0.750 & 0.725 \\
+Morgan FP (1024-bit)       & RF                  & 0.900 & 0.839 & 0.825 \\
+Morgan FP (1024-bit)       & XGBoost             & 0.899 & 0.842 & 0.826 \\
+RDKit 2D descriptors       & RF                  & 0.867 & 0.806 & 0.786 \\
+ChemBERTa (77M pre-trained)& frozen + head       & 0.802 & 0.750 & 0.725 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Morgan fingerprints achieved 0.900 AUROC with RF, marginally outperforming XGB (0.899). RDKit 2D descriptors achieved 0.867 AUROC, underperforming fingerprints. ChemBERTa achieved 0.802 AUROC, the lowest of the three. On balanced data, hand-engineered representations outperform learned models. This does not rule out learned representations on imbalanced data. ChemBERTa was tested on only AMES (balanced, 50% positive). Testing it on imbalanced data would clarify whether learned embeddings have fundamental limitations on class imbalance, or whether they struggle for other reasons.
+Morgan fingerprints win on a balanced, data-rich task. RDKit descriptors trail by 3 AUROC points and the frozen ChemBERTa by 10. Learned embeddings are not automatically better than well-engineered fingerprints, at least not on this regime.
 
-\subsection{Graph Neural Network Performance Across Toxicity Tasks}
+\subsection{GNN results, v1 to v2 (Level 3)}
 
-To investigate whether flexible learned representations overcome class imbalance, four GNN architectures were tested across all 17 datasets (six toxicity tasks plus twelve Tox21 endpoints). Two configurations (v1 and v2) were evaluated, differing in feature richness, model capacity, and loss function design.
-
-Atom features (per node): atomic number, degree, formal charge, aromaticity, H-count, ring membership, hybridization state, total valence, radical electrons (9 dimensions per atom). V2's richer encoding—compared to v1's 4 features—explicitly captures properties critical for toxicity (ring membership, hydrogen bonding, valence reactivity).
-
-Four architectures were evaluated, each with 2 convolutional layers, global aggregation (mean pooling for GCN/GAT/GraphSAGE, sum pooling for GIN), and a linear output head: GCN (degree-normalized neighbourhood mean), GIN (learnable $\varepsilon$-weighted sum, theoretically as expressive as Weisfeiler-Lehman test), GAT (multi-head attention over neighbours, learns importance weights per edge), and GraphSAGE (sample-and-aggregate with concatenation, designed for inductive generalization).
+The four architectures were trained in two configurations across the 17 tasks (68 runs per configuration). v1 used a minimal 4-feature atom encoding, hidden dimension 16, unweighted BCE, and a fixed 0.5 threshold. v2 expanded atom features to 9 dimensions, raised hidden dimension to 64, and used class-weighted BCE with per-dataset \texttt{pos\_weight}.
 
 \begin{table}[H]
 \centering
-\caption{GNN configurations: v1 (baseline) vs v2 (improved).}
-\label{tab:gnn_config}
-\begin{tabular}{llrr}
+\caption{GNN v1 vs.\ v2 on the headline metrics. GIN is strongest in both configurations.}
+\label{tab:v2}
+\begin{tabular}{lrrrrrr}
 \toprule
-\textbf{Component} & \textbf{Description} & \textbf{v1} & \textbf{v2} \\
+& \multicolumn{2}{c}{\textbf{Tox21 macro-AUROC}} & \multicolumn{2}{c}{\textbf{Mean F1 (16 cls.)}} & \multicolumn{2}{c}{\textbf{LD50 $R^2$}} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+\textbf{Model} & v1 & v2 & v1 & v2 & v1 & v2 \\
 \midrule
-Atom features & \multicolumn{1}{l}{atomic\_num, degree, charge, aromatic, \ldots} & 4 & 9 \\
-Hidden dimension & GNN layer width & 16 & 64 \\
-Learning rate & Adam optimizer & 0.01 & 0.001 \\
-Loss function & BCE for classification & unweighted & pos\_weight \\
-Datasets tested & toxicity + Tox21 endpoints & 17 & 17 \\
-Models trained & (4 architectures) & 68 & 68 \\
+GCN       & 0.705 & 0.732          & 0.108 & 0.279          & 0.260 & 0.335 \\
+GIN       & 0.753 & \textbf{0.781} & 0.307 & \textbf{0.388} & 0.430 & \textbf{0.491} \\
+GAT       & 0.721 & 0.748          & 0.122 & 0.314          & 0.206 & 0.396 \\
+GraphSAGE & 0.734 & 0.710          & 0.187 & 0.314          & 0.236 & 0.415 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-v1 uses minimal features and small hidden dimension, underfitting especially on regression and severe imbalance. v2 expands the atom feature space (adding H-count, ring membership, hybridization, valence, radical electrons) and capacity (hidden=64). It also applies class-weighted loss: the loss function penalizes missing a toxic molecule more heavily than a false alarm. Specifically, pos_weight = (number of non-toxic) / (number of toxic). On ClinTox with 8\% toxic, this multiplier is about 11, forcing the model to find the rare toxic examples.
+v1 surfaced two failure modes. LD50 regression was under-fit across all four ($R^2 \le 0.43$), pointing at insufficient atom information and capacity. F1 collapsed on imbalanced classification: GCN and GAT produced F1~$=0$ at the default threshold despite reasonable AUROC. The clearest case was ClinTox/GIN, ROC-AUC 0.922 with F1~$=0$, where the model was ranking molecules near-perfectly but never crossing the sigmoid threshold. Calibrating the threshold to the class prior recovered F1 to 0.34 with no retraining.
 
-GNN v2 was trained on all six toxicity datasets plus twelve Tox21 endpoints (68 total runs: 4 models $\times$ 17 datasets).
+v2 fixes both failures. Three of four architectures improve on every metric, and GIN remains strongest (Tox21 macro 0.781, 11 of 16 wins, LD50 $R^2 = 0.491$). The class-weighted loss is the largest single contributor to F1 recovery (GAT mean F1 jumps from 0.122 to 0.314). GraphSAGE regresses on three highly imbalanced datasets (ClinTox, NR-ER-LBD, NR-Aromatase) under aggressive \texttt{pos\_weight}, which focal loss~\cite{lin2017} addresses.
 
-On balanced tasks (AMES, hERG), GIN achieves 0.79--0.88 AUROC, competitive with fingerprints (0.91--0.92 AUROC). Fingerprints match or exceed GNNs on all four architectures.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{tox21_heatmap_auroc.png}
+\caption{Per-dataset, per-architecture v2 ROC-AUC. GIN is the most uniformly green column. GraphSAGE collapses on the most imbalanced rows (ClinTox 0.534, NR-Aromatase 0.498, NR-ER-LBD 0.538).}
+\label{fig:tox21_heatmap}
+\end{figure}
 
-On severely imbalanced tasks (ClinTox 8\%, Tox21 3--15\%), fingerprints achieve 0.79 AUROC on ClinTox while GNNs achieve 0.54 AUROC with class-weighted loss. Both plateau despite different representations. At fixed 0.5 threshold, GNNs produce F1=0 because the model ranks molecules by risk (high AUROC) but never predicts "toxic." Calibrated thresholds (set to class prior: 0.08 for ClinTox) recover F1 substantially without retraining, confirming the models learn meaningful signal but need post-hoc adjustment.
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{threshold_calibration.png}
+\caption{Per-dataset F1 heatmaps. \emph{Left}: v1, fixed 0.5 threshold (red columns are F1 collapse). \emph{Right}: v2, calibrated threshold equal to the class prior. v2 is uniformly non-zero across imbalanced rows, including endpoints that v1 left dead.}
+\label{fig:threshold}
+\end{figure}
 
-On regression (LD50), fingerprints achieve $R^2 = 0.60$ while GNNs achieve $R^2 = 0.49$. Fingerprints outperform despite GNNs being theoretically better at encoding continuous properties. Graphs do encode continuous information (valence, ring geometry, hydrogen bonding) that binary fingerprints cannot: 49\% variance explained versus fingerprints' $<10\%$ on raw bit vectors shows graphs capture structure-property relationships. Yet classical ML generalizes better on this task.
+Figure~\ref{fig:tox21_heatmap} shows v2 AUROC mostly above 0.7 across endpoints with GIN best. Figure~\ref{fig:threshold} shows the threshold-calibration effect: v2 trades a small amount of peak F1 on the balanced rows for non-zero F1 across every imbalanced row, the signature of a model taught to commit to the minority class during training rather than rescued at evaluation.
 
-Architecture ranking: GIN dominates over GCN, GAT, and GraphSAGE across all tasks. GIN wins on 13 of 16 classification datasets and on regression. But even the best GNN does not beat classical ML on imbalanced classification or regression.
+\subsection{GNN vs.\ classical head-to-head}
 
-% ─────────────────────────────────────────────────────────────────────────────
+Bringing the strongest GNN (GIN~v2) head-to-head with the strongest classical baseline per task gives the cleanest answer to the proposal's core question on the toxicity stack.
+
+\begin{table}[H]
+\centering
+\caption{Best classical ML vs.\ GIN~v2 on the comparable subset of tasks. Bold marks the winner per row. Ties within 0.01 AUROC are not bolded.}
+\label{tab:headtohead}
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Task} & \textbf{Best classical} & \textbf{GIN v2} & \textbf{Verdict} \\
+\midrule
+AMES (50\% pos)            & \textbf{0.906} (RF)   & 0.851          & classical wins by 0.06 \\
+hERG\_Karim (40\% pos)     & \textbf{0.920} (RF)   & 0.849          & classical wins by 0.07 \\
+DILI (45\% pos, $n{=}475$) & 0.868 (RF)            & 0.877 (GAT v2) & tie / GAT slightly ahead \\
+ClinTox (8\% pos)          & 0.870 (XGB)           & 0.812          & XGB wins, GIN beats RF (0.792) \\
+Tox21 (macro)              & \textbf{0.803} (XGB)  & 0.781          & classical wins by 0.02 \\
+LD50\_Zhu ($R^2$)          & \textbf{0.605} (XGB)  & 0.491          & classical wins by 0.11 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The picture is more nuanced than either ``fingerprints win'' or ``GNNs win''. On balanced classification (AMES, hERG), where fingerprints have abundant data and the substructure patterns are highly informative, classical ML keeps a clear edge. On the small DILI dataset, GAT~v2 edges ahead of RF. That is the only outright GNN win. On ClinTox, GIN~v2 beats RF but loses to XGBoost. On Tox21 the gap closes to 0.02 AUROC. On LD50 regression, classical ML retains a substantial 11-point $R^2$ advantage.
+
+% =============================================================================
 \section{Discussion}
 
-\subsection{Class Imbalance as the Primary Constraint}
+\subsection{Where the fingerprint baseline is weak}
 
-Three parallel experimental investigations tested different representation strategies (fingerprints, ChemBERTa, GNNs) on different dataset combinations (baseline on 6 toxicity datasets, representation comparison on AMES only, GNN analysis on all 17 datasets). Despite these differences, all converge on a single finding: class imbalance, not representation choice, determines performance on imbalanced toxicity tasks.
+Across the toxicity stack, classical ML on Morgan fingerprints loses (or comes close to losing) only on small data (DILI, $n{=}475$) and on severe class imbalance (ClinTox 8\%). Where it wins comfortably (AMES, hERG, LD50), the dataset is large or balanced or both. The frozen ChemBERTa on AMES tightens the picture: a 77M-parameter chemical language model loses to a 1024-bit fingerprint plus 500 trees by 10 AUROC points. Pre-trained learned embeddings do not automatically transfer.
 
-ClinTox provides the clearest example. With 92 toxic molecules out of 1,130 total (8\% positive), fingerprints achieve 0.79 AUROC while GNNs achieve 0.54 AUROC. Both plateau despite fundamentally different representations. The problem is not algorithmic design; it is data scarcity. Eighty-two toxic molecules cannot reliably teach any representation system to distinguish the toxic minority from the non-toxic majority with high confidence.
+\subsection{Loss-side vs.\ data-side imbalance fixes}
 
-This challenges the common hypothesis that learned representations overcome data limitations. Instead, flexible models (GNNs, ChemBERTa) may struggle more on imbalanced data because their additional capacity allows them to fit noise in the small positive class rather than learning true toxicity signals.
+Three independent results on the imbalance question converge:
+\begin{itemize}
+\item Rejection sampling on classical ML \emph{reduces} AUROC (information loss).
+\item SMOTE on classical ML helps when fingerprints already separate the classes (Tox21) and is ineffective when they do not (ClinTox).
+\item Class-weighted BCE inside the GNN loss roughly triples mean F1 on the architectures that had collapsed, with no data manipulation.
+\end{itemize}
+The lesson generalises beyond this project: imbalance interventions should reshape the gradient signal, not the dataset. The picture of v2 in Figure~\ref{fig:threshold} (right) is the picture of a model that learned to commit to the minority class during training, not one rescued at evaluation time by lowering a threshold.
 
-\subsection{Gaps in Experimental Coverage}
+\subsection{Limitations}
 
-The three parallel investigations created several evaluation asymmetries:
+\begin{description}[leftmargin=1.5em, style=nextline]
+\item[Inconsistent splits across pipelines.] Classical baselines and the SMOTE / rejection-sampling experiments use scaffold splits. The GNN runs use TDC's deterministic random split. The head-to-head table above is therefore an indication, not yet a fair comparison, and re-running the GNNs on scaffold splits is the first item in the next-steps plan.
+\item[Single seed.] Each configuration was trained once. We have no confidence intervals. Differences smaller than roughly 2 AUROC points should not be over-interpreted.
+\item[No bond features in the GNNs.] Bonds carry only connectivity, not type, stereochemistry, or ring membership at the edge level. This is the largest within-graph information gap.
+\item[ChemBERTa tested on one dataset only.] We do not know whether learned embeddings fail under imbalance the same way the v1 GNNs did.
+\item[No DTI experiments yet, no 3D yet.] Levels 4 (3D) and the dataset-axis extension (DTI) are not started.
+\end{description}
 
-\textbf{Unequal evaluation protocol}: Fingerprints were evaluated with fixed 0.5 threshold; GNNs received post-hoc calibrated thresholds. Without consistent protocol across representations, direct comparison is incomplete.
+% =============================================================================
+\section{Final Phase}
+\label{sec:nextsteps}
 
-\textbf{Different dataset coverage}: Baseline tested all 6 toxicity datasets; representation comparison tested only AMES; GNNs tested all 17 tasks. This prevents direct side-by-side comparison across the same data.
+\subsection{Research question}
 
-\textbf{Different imbalance strategies}: Fingerprints used rejection sampling; GNNs used class-weighted loss. Neither experiment combined both strategies on the same representation, so their synergistic effects remain unexplored.
+The proposal's question is answered narrowly on toxicity: GIN matches fingerprints only on small-data and severely imbalanced regimes, and trails on the rest. Pushing further along the representation axis (more features, 3D) would explore the same regime where the engineered baseline is already strong. The decisive test is drug-target interaction, where the protein partner cannot be Morgan-fingerprinted and the GNN drug encoder is paired with a protein encoder by construction. A fingerprint baseline must improvise on the protein side, while the GNN operates in its native regime. This is where the proposal originally aimed, and where the GNN's structural advantage should be largest.
 
-\textbf{ChemBERTa incompletely tested}: Only evaluated on AMES (balanced, 50% positive). Whether learned embeddings fail on imbalance like GNNs remains unclear.
+\begin{quote}
+\textit{Where does the graph neural network provide a meaningful advantage over Morgan-fingerprint baselines on drug safety prediction? On drug-only toxicity the answer is narrow: GIN matches fingerprints only on small or severely imbalanced regimes. On drug-target interaction, where the protein partner is not amenable to fingerprinting and a GNN drug encoder is paired with a protein encoder by design, does the GNN's structural advantage become decisive?}
+\end{quote}
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{Conclusions and Future Work}
+The mid-term answers the first half. The final phase answers the second.
 
-\subsection{Key Findings}
+\subsection{Plan}
 
-Three experimental streams (classical ML baseline, representation exploration, GNN investigation) independently arrive at the same conclusion: class imbalance is the primary performance constraint on drug toxicity prediction, regardless of representation choice. Fingerprints achieve 0.79--0.92 AUROC on balanced tasks and plateau at 0.79 AUROC on severe imbalance (ClinTox 8\%). GNNs achieve 0.79--0.88 AUROC on balanced tasks but only 0.54 AUROC on ClinTox. Learned embeddings (ChemBERTa) underperform fingerprints on balanced AMES (0.802 vs 0.900 AUROC).
+The final phase hardens the GNN we already trained and takes it to drug-target interaction. The two steps are sequential. The DTI step is the one that answers the research question.
 
-\subsection{Primary Investigation: Next Two Weeks}
+\begin{enumerate}[leftmargin=2em]
+\item \textbf{Harden the GNN on toxicity.} Three changes targeting known weaknesses of v2. First, add bond-level edge features (type, stereochemistry, ring membership), the largest remaining within-graph information gap. Second, re-run all GNN configurations on scaffold splits with three seeds to give Table~\ref{tab:headtohead} confidence intervals. Third, replace GraphSAGE's aggressive \texttt{pos\_weight} with focal loss~\cite{lin2017} to recover its three regressed datasets. Output: a rigorous, scaffold-split, multi-seed head-to-head against the classical baseline on the same toxicity tasks.
+\item \textbf{Apply the hardened GNN to DAVIS.} DAVIS is already loaded (30k drug-target pairs, 68 drugs $\times$ 442 kinase targets, $K_d$ regression). The GIN drug encoder from step~1 is paired with a frozen ESM-2 small protein encoder and a linear projection head on the target side, concatenated and passed through an MLP for the final scalar. The fingerprint baseline gets a Morgan fingerprint on the drug side and an amino-acid-composition embedding on the protein side. Metrics: Pearson, RMSE, concordance index. The win condition is whether the GNN drug encoder beats the fingerprint drug encoder when both are paired with the same protein representation, and by how much.
+\item \textbf{Final analysis and report.} Combined comparison across toxicity and DTI on consistent splits with confidence intervals.
+\end{enumerate}
 
-The team commits to one focused experiment to validate whether imbalance is fundamentally limiting or whether combined strategies can overcome it.
+\subsection{Stretch goals}
 
-Apply rejection sampling (the data-side intervention that improved classical ML) to GIN on ClinTox. This directly tests whether combining data-side (rejection sampling) and model-side (class-weighted loss) interventions breaks the imbalance ceiling.
+These run only if the DTI experiment converges with time remaining. They do not hold up the final report.
 
-Hypothesis: If learned graph features are sound, rejection sampling should help GNNs reach at least 0.79 AUROC on ClinTox, matching fingerprints. If GNNs remain below 0.60 AUROC, the bottleneck is architectural. Timeline: one week, leaving one week for optional follow-up. Success criteria: clear yes/no answer to whether combined strategies overcome the imbalance ceiling.
+\begin{description}[leftmargin=1.5em, style=nextline]
+\item[Level 4 (SchNet on LD50).] Train SchNet~\cite{schnet} on RDKit-generated 3D conformers for LD50. The cleanest place to test whether 3D atomic geometry adds anything that 2D plus bond features did not.
+\item[KIBA.] The larger DTI dataset (118k pairs). Attempted only if DAVIS is solved decisively.
+\end{description}
 
-\subsection{Extended Directions: Future Work}
+% =============================================================================
+\section*{Software}
 
-If the primary phase succeeds, the following extensions would strengthen the work:
+The pipeline is built on standard open-source libraries: RDKit for SMILES parsing and atom or bond featurisation, PyTorch and PyTorch Geometric~\cite{fey2019} for the GNNs, scikit-learn and XGBoost for the classical baselines, HuggingFace Transformers for ChemBERTa, and TDC~\cite{huang2021} for dataset access and scaffold splits. All experiments use seed 42 across \texttt{random}, \texttt{numpy}, \texttt{torch}, and CUDA. Per-version model weights, prediction CSVs, and TensorBoard logs are saved under \texttt{models/v\{1,2\}/} and \texttt{results/v\{1,2\}/} so each phase remains reproducible alongside later experiments.
 
-\textbf{3D Geometric Deep Learning}: Current GNNs use only 2D connectivity. Models like SchNet, NequIP, and Allegro incorporate 3D coordinates. Testing whether 3D geometry encodes toxicity signals that 2D misses would be significant, particularly for LD50 where acute toxicity depends on 3D geometry.
-
-\textbf{Unified Evaluation Protocol}: Re-evaluate classical ML and GNN on all six toxicity datasets with identical conditions (scaffold splits, 5-fold CV, calibrated thresholds). This removes evaluation confounds and cleanly answers whether representation choice matters when everything else is equal.
-
-\textbf{ChemBERTa on All Datasets}: Test pre-trained embeddings on all six toxicity datasets and Tox21. If ChemBERTa fails on imbalance like GNNs, this shows learned representations (embeddings, graphs) fundamentally struggle with data scarcity.
-
-\textbf{Protein-Interaction Models}: Extend to DAVIS and KIBA (drug-target interaction) to test whether the imbalance ceiling generalizes beyond drug-only toxicity to broader molecular prediction tasks.
-
-These extensions are ambitious and optional, representing the team's longer-term vision if the foundation experiment succeeds.
-
-% ─────────────────────────────────────────────────────────────────────────────
-\appendix
-
-\section{Software and Implementation}
-
-The project uses standard open-source libraries: RDKit for SMILES parsing and molecular graph construction,
-PyTorch and PyTorch Geometric for GNN training, scikit-learn and XGBoost for baseline methods. All notebooks
-and code are available in the project repository for reproducibility.
-
+% =============================================================================
 \begin{thebibliography}{20}
+
+\bibitem{huang2021}
+K.~Huang, T.~Fu, W.~Gao, et~al.,
+``Therapeutics Data Commons: Machine learning datasets and benchmarks for therapeutic discovery,''
+\textit{Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track}, 2021.
+
+\bibitem{morgan1965}
+H.~L. Morgan,
+``The generation of a unique machine description for chemical structures: A technique developed at Chemical Abstracts Service,''
+\textit{Journal of Chemical Documentation}, 5(2): 107 to 113, 1965.
 
 \bibitem{chemrev}
 D.~Rogers and M.~Hahn,
-``Modeling using random forests and its application to medicinal chemistry,''
-\textit{Chemical Reviews}, 110(5): 3432--3465, 2010.
-
-\bibitem{xu2019}
-K.~Xu, W.~Hu, J.~Leskovec, and S.~Jegelka,
-``How powerful are graph neural networks?,''
-\textit{International Conference on Learning Representations (ICLR)}, 2019.
+``Extended-connectivity fingerprints,''
+\textit{Journal of Chemical Information and Modeling}, 50(5): 742 to 754, 2010.
 
 \bibitem{kipf2017}
 T.~N. Kipf and M.~Welling,
 ``Semi-supervised classification with graph convolutional networks,''
 \textit{International Conference on Learning Representations (ICLR)}, 2017.
 
+\bibitem{xu2019}
+K.~Xu, W.~Hu, J.~Leskovec, and S.~Jegelka,
+``How powerful are graph neural networks?,''
+\textit{International Conference on Learning Representations (ICLR)}, 2019.
+
 \bibitem{velickovic2018}
-P.~Velicki\'{c}, G.~Cucurull, A.~Casanova, A.~Romero, P.~Li\`{o}, and Y.~Bengio,
+P.~Veli\v{c}kovi\'{c}, G.~Cucurull, A.~Casanova, A.~Romero, P.~Li\`{o}, and Y.~Bengio,
 ``Graph attention networks,''
 \textit{International Conference on Learning Representations (ICLR)}, 2018.
 
 \bibitem{hamilton2017}
-W.~L. Hamilton, Z.~Ying, and J.~Leskovec,
+W.~L. Hamilton, R.~Ying, and J.~Leskovec,
 ``Inductive representation learning on large graphs,''
 \textit{Advances in Neural Information Processing Systems (NeurIPS)}, 2017.
-
-\bibitem{huang2021}
-K.~Huang, T.~Fu, W.~Gao, et al.,
-``Therapeutics Data Commons: Machine learning datasets and benchmarks for therapeutic discovery,''
-\textit{Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track}, 2021.
-
-\bibitem{chawla2002}
-N.~V. Chawla, K.~W. Bowyer, L.~O. Hall, and W.~P. Kegelmeyer,
-``SMOTE: synthetic minority over-sampling technique,''
-\textit{Journal of Artificial Intelligence Research}, 16: 321--357, 2002.
-
-\bibitem{lin2017}
-T.-Y. Lin, P.~Goyal, R.~B. Girshick, K.~He, and P.~Doll\'{a}r,
-``Focal loss for dense object detection,''
-\textit{IEEE International Conference on Computer Vision (ICCV)}, 2017.
 
 \bibitem{fey2019}
 M.~Fey and J.~E. Lenssen,
 ``Fast graph representation learning with PyTorch Geometric,''
 \textit{ICLR Workshop on Representation Learning on Graphs and Manifolds}, 2019.
 
-\bibitem{morgan1965}
-A.~M. Morgan,
-``The generation of a unique machine description for chemical structures: A technique developed at Chemical Abstracts Service,''
-\textit{Journal of Chemical Documentation}, 5(2): 107--113, 1965.
+\bibitem{lin2017}
+T.-Y. Lin, P.~Goyal, R.~Girshick, K.~He, and P.~Doll\'{a}r,
+``Focal loss for dense object detection,''
+\textit{IEEE International Conference on Computer Vision (ICCV)}, 2017.
+
+\bibitem{schnet}
+K.~T. Sch\"{u}tt, P.-J. Kindermans, H.~E. Sauceda, S.~Chmiela, A.~Tkatchenko, and K.-R. M\"{u}ller,
+``SchNet: A continuous-filter convolutional neural network for modeling quantum interactions,''
+\textit{Advances in Neural Information Processing Systems (NeurIPS)}, 2017.
 
 \end{thebibliography}
 
