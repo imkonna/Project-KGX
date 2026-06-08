@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GDL for Drug Toxicity A0 Poster</title>
+<style>
+  :root{
+    --paper:#FBF8F1;
+    --paper2:#F4EFE3;
+    --panel:rgba(255,255,255,.92);
+    --ink:#1E2D36;
+    --ink-soft:#46555E;
+    --muted:#7C8A91;
+    --line:#DAD2C2;
+    --teal:#2C7A8C;        /* GNN */
+    --teal-deep:#1C5D6E;
+    --teal-wash:#E3EEF0;
+    --coral:#E0613B;       /* Classical */
+    --coral-deep:#C24A28;
+    --coral-wash:#F8E6DE;
+    --gold:#B07A1E;
+  }
+
+  @page{ size:841mm 1189mm; margin:0; }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:'Montserrat','Poppins','DejaVu Sans',sans-serif;
+    color:var(--ink);
+    background:var(--paper);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    width:841mm; height:1189mm;
+    background:
+      radial-gradient(1100px 700px at 88% -4%, rgba(44,122,140,.06), transparent 60%),
+      radial-gradient(900px 600px at 6% 102%, rgba(224,97,59,.05), transparent 60%),
+      var(--paper);
+    position:relative;
+    padding:20mm 24mm 16mm 24mm;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .page::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      linear-gradient(90deg, rgba(251,248,241,.91) 0%, rgba(251,248,241,.76) 43%, rgba(251,248,241,.38) 100%),
+      linear-gradient(180deg, rgba(251,248,241,.26) 0%, rgba(251,248,241,.10) 45%, rgba(251,248,241,.31) 100%),
+      url("assets/protein_ml_background_v2_compressed.jpg") center center / cover no-repeat;
+    opacity:.92;
+    filter:saturate(1.08) contrast(1.04);
+    pointer-events:none;
+    z-index:0;
+  }
+  .page::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:
+      radial-gradient(circle at 81% 8%, rgba(44,122,140,.20) 0 1.2mm, transparent 1.4mm),
+      radial-gradient(circle at 88% 14%, rgba(224,97,59,.18) 0 1.2mm, transparent 1.4mm),
+      radial-gradient(circle at 76% 19%, rgba(44,122,140,.16) 0 1mm, transparent 1.2mm),
+      linear-gradient(130deg, transparent 0 70%, rgba(44,122,140,.11) 70.1% 70.3%, transparent 70.4%),
+      linear-gradient(152deg, transparent 0 74%, rgba(224,97,59,.10) 74.1% 74.3%, transparent 74.4%);
+    opacity:.22;
+    pointer-events:none;
+    z-index:0;
+  }
+  .page > *{ position:relative; z-index:1; }
+
+  /* ---------- typographic system ---------- */
+  .serif{ font-family:'Lora','DejaVu Serif',serif; }
+  .eyebrow{
+    font-size:12.5pt; font-weight:600; letter-spacing:.28em;
+    text-transform:uppercase; color:var(--teal-deep);
+  }
+  h1.title{
+    font-family:'Lora',serif; font-weight:700;
+    font-size:60pt; line-height:1.02; letter-spacing:-.5pt;
+    margin:4mm 0 0; color:var(--ink);
+  }
+  .thesis{
+    font-family:'Lora',serif; font-style:italic; font-weight:500;
+    font-size:20pt; line-height:1.3; color:var(--ink-soft);
+    margin:4mm 0 0; max-width:540mm;
+  }
+  .byline{
+    margin-top:5mm; display:flex; align-items:baseline; gap:0 14mm; flex-wrap:wrap;
+    font-size:16pt;
+  }
+  .byline .authors{ font-weight:600; color:var(--ink); letter-spacing:.01em; }
+  .byline .sup{ color:var(--muted); font-size:13.5pt; letter-spacing:.04em; }
+  .byline .sup b{ color:var(--ink-soft); font-weight:600; }
+
+  /* section scaffolding */
+  .sec-head{ display:flex; align-items:center; gap:6mm; margin:0 0 5mm; }
+  .sec-idx{
+    font-family:'Lora',serif; font-weight:700; font-size:17pt;
+    width:11mm; height:11mm; flex:0 0 auto; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; background:var(--teal-deep);
+  }
+  .sec-idx.coral{ background:var(--coral-deep); }
+  .sec-title{
+    font-family:'Lora',serif; font-weight:600; font-size:28pt;
+    line-height:1.05; color:var(--ink);
+  }
+  .sec-title small{ display:block; font-family:'Montserrat','Poppins',sans-serif;
+    font-weight:500; font-size:13.5pt; letter-spacing:.035em; color:var(--muted); margin-top:1.5mm; }
+
+  .panel{
+    background:var(--panel); border:0.5pt solid rgba(218,210,194,.86);
+    border-radius:5mm; padding:8mm 9mm 7mm;
+    box-shadow:0 2mm 7mm rgba(30,45,54,.05);
+  }
+
+  p{ font-size:16.2pt; line-height:1.42; margin:0 0 3.5mm; color:var(--ink-soft); }
+  p.lead{ font-size:18pt; line-height:1.38; color:var(--ink); }
+  b,strong{ color:var(--ink); font-weight:600; }
+  .teal-t{ color:var(--teal-deep); font-weight:600; }
+  .coral-t{ color:var(--coral-deep); font-weight:600; }
+
+  figure{ margin:0; }
+  .pipeline{ width:100%; }
+  .pipeline svg{ width:100%; height:auto; display:block; }
+
+  figure img{ width:100%; height:auto; display:block; border-radius:2mm; }
+  .ddfig img{ width:auto; max-width:100%; max-height:222mm; margin:0 auto; }
+  figcaption{
+    font-size:13pt; line-height:1.38; color:var(--muted);
+    margin-top:3mm; font-style:italic;
+  }
+
+  .grid{ display:grid; gap:8mm; }
+
+  /* header band */
+  .header{ position:relative; padding-bottom:6mm; }
+  .accent-bar{
+    position:absolute; left:0; bottom:0; height:1.6mm; width:100%;
+    background:linear-gradient(90deg,var(--teal) 0%, var(--teal-deep) 38%, var(--coral) 100%);
+    border-radius:2mm;
+  }
+  .helix{ display:none; }
+
+  /* KPI strip */
+  .kpi-strip{ display:grid; grid-template-columns:repeat(4,1fr) 1.35fr; gap:6mm; margin:6mm 0 6mm; }
+  .kpi{
+    border-radius:4.5mm; padding:7mm 8mm 6.5mm; position:relative; overflow:hidden;
+    border:0.5pt solid var(--line);
+    box-shadow:0 2mm 7mm rgba(30,45,54,.07);
+  }
+  .kpi.win{ background:linear-gradient(160deg,#EAF2F3,#DCEAEC); border-color:#BcD6da; }
+  .kpi.loss{ background:linear-gradient(160deg,#FBEAE3,#F6DDD2); border-color:#EAC2b2; }
+  .kpi .ds{ font-size:13.5pt; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); }
+  .kpi .delta{ font-family:'Lora',serif; font-weight:700; font-size:46pt; line-height:1; margin:3mm 0 1mm; }
+  .kpi.win .delta{ color:var(--teal-deep); }
+  .kpi.loss .delta{ color:var(--coral-deep); }
+  .kpi .verdict{ font-size:12.5pt; font-weight:600; letter-spacing:.03em; }
+  .kpi.win .verdict{ color:var(--teal); }
+  .kpi.loss .verdict{ color:var(--coral); }
+  .kpi .vs{ font-size:12.5pt; color:var(--muted); margin-top:1.5mm; }
+  .kpi-note{
+    background:#21323b; color:#EAF0F1; border:none;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .kpi-note .ds{ color:#9FD0D9; }
+  .kpi-note .delta{ color:#fff; font-size:30pt; }
+  .kpi-note p{ color:#C9D6DA; font-size:13pt; margin:2mm 0 0; line-height:1.35; }
+
+  /* method ladder */
+  .ladder{ margin:4mm 0 0; }
+  .rung{ display:flex; gap:4mm; align-items:flex-start; padding:3mm 0; border-top:0.5pt solid var(--line); }
+  .rung:first-child{ border-top:none; }
+  .rung .tag{
+    flex:0 0 30mm; font-size:11pt; font-weight:700; letter-spacing:.04em;
+    text-transform:uppercase; padding-top:.5mm;
+  }
+  .rung .tag.c1{ color:var(--coral-deep); }
+  .rung .tag.c2{ color:var(--gold); }
+  .rung .tag.c3{ color:var(--teal-deep); }
+  .rung .tag.c4{ color:var(--teal); }
+  .rung .desc{ font-size:14.3pt; line-height:1.35; color:var(--ink-soft); }
+  .rung .desc b{ color:var(--ink); }
+
+  .proto{
+    margin-top:5mm; padding:5mm 6mm; border-radius:3.5mm;
+    background:var(--paper2); border:0.5pt solid var(--line);
+    font-size:13.7pt; line-height:1.42; color:var(--ink-soft);
+  }
+  .proto b{ color:var(--ink); }
+
+  /* takeaway callout */
+  .take{
+    border-left:2.2mm solid var(--teal); padding:3mm 0 3mm 6mm; margin-top:4mm;
+    font-size:15pt; line-height:1.38; color:var(--ink);
+  }
+  .take.coral{ border-left-color:var(--coral); }
+  .take b{ font-weight:600; }
+
+  ul.tight{ margin:1mm 0 0; padding-left:6mm; }
+  ul.tight li{ font-size:15.2pt; line-height:1.4; color:var(--ink-soft); margin-bottom:2.8mm; }
+  ul.tight li b{ color:var(--ink); }
+
+  /* conclusions */
+  .concl{ background:#21323b; border-radius:5mm; padding:6mm 10mm; color:#EAF0F1; }
+  .concl-head{ display:flex; align-items:center; gap:5mm; margin-bottom:5mm; }
+  .concl-head .sec-title{ color:#fff; }
+  .concl-grid{ display:grid; grid-template-columns:1fr 1fr; gap:5mm 11mm; }
+  .cc{ display:flex; gap:5mm; }
+  .cc .n{ font-family:'Lora',serif; font-weight:700; font-size:30pt; line-height:1;
+    color:#6FB7C4; flex:0 0 auto; }
+  .cc .t{ font-size:16pt; line-height:1.38; color:#DCE6E8; }
+  .cc .t b{ color:#fff; font-weight:600; }
+
+  /* footer / references */
+  .foot{ display:grid; grid-template-columns:1.45fr 1fr 0.46fr; gap:9mm; margin-top:6mm; align-items:start; }
+  .qrbox{ display:flex; flex-direction:column; align-items:center; text-align:center;
+    border-left:0.5pt solid var(--line); padding-left:8mm; }
+  .qrbox img{ width:34mm; height:34mm; display:block; border:0.5pt solid var(--line);
+    border-radius:2mm; padding:1.5mm; background:#fff; }
+  .qrbox .qrcap{ font-size:11pt; line-height:1.35; color:var(--ink-soft); margin-top:3mm; }
+  .qrbox .qrcap b{ color:var(--teal-deep); }
+  .qrbox .qrurl{ font-size:9.5pt; color:var(--muted); margin-top:1.5mm; letter-spacing:.01em;
+    font-family:'DejaVu Sans Mono',monospace; }
+  .refs h4, .meta h4{
+    font-size:11pt; font-weight:700; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--teal-deep); margin:0 0 3mm;
+  }
+  .refs ol{ margin:0; padding-left:6mm; columns:2; column-gap:9mm; }
+  .refs li{ font-size:11.2pt; line-height:1.32; color:var(--ink-soft); margin-bottom:2mm; break-inside:avoid; }
+  .refs li i{ color:var(--ink); font-style:italic; }
+  .meta p{ font-size:12pt; line-height:1.4; color:var(--ink-soft); margin:0 0 2.5mm; }
+  .meta .stamp{ font-family:'Lora',serif; font-style:italic; font-size:13pt; color:var(--muted); }
+
+  .flush{ display:flex; flex-direction:column; height:100%; }
+  .spacer{ flex:1 1 auto; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ================= HEADER ================= -->
+  <header class="header">
+    <svg class="helix" width="150" height="118" viewBox="0 0 150 118" fill="none">
+      <g stroke-linecap="round">
+        <path d="M22 8 C 90 30, 60 60, 128 82" stroke="#2C7A8C" stroke-width="3.4" opacity="0.85"/>
+        <path d="M22 36 C 90 58, 60 88, 128 110" stroke="#E0613B" stroke-width="3.4" opacity="0.8"/>
+        <path d="M22 8 C 90 30, 60 60, 128 82" stroke="#2C7A8C" stroke-width="3.4" opacity="0" />
+        <g stroke="#9DB6BC" stroke-width="2">
+          <line x1="34" y1="13" x2="34" y2="41"/>
+          <line x1="58" y1="22" x2="58" y2="50"/>
+          <line x1="82" y1="42" x2="82" y2="70"/>
+          <line x1="106" y1="62" x2="106" y2="90"/>
+          <line x1="120" y1="76" x2="120" y2="104"/>
+        </g>
+        <g fill="#2C7A8C"><circle cx="34" cy="13" r="4"/><circle cx="58" cy="22" r="4"/><circle cx="82" cy="42" r="4"/><circle cx="106" cy="62" r="4"/><circle cx="120" cy="76" r="4"/></g>
+        <g fill="#E0613B"><circle cx="34" cy="41" r="4"/><circle cx="58" cy="50" r="4"/><circle cx="82" cy="70" r="4"/><circle cx="106" cy="90" r="4"/><circle cx="120" cy="104" r="4"/></g>
+      </g>
+    </svg>
+
+    <div class="eyebrow">Advanced Topics in Machine Learning &nbsp;&nbsp; M.Sc. Artificial Intelligence &nbsp;&nbsp; Aristotle University of Thessaloniki &nbsp;&nbsp; 2025 2026</div>
+    <h1 class="title">Graph &amp; Geometric Deep Learning<br>for Drug Toxicity Prediction</h1>
+    <div class="thesis">A task regime map for molecular toxicity. Graph models help on scarce or imbalanced assays. Fingerprints stay strong on larger endpoints. Scaffold splits decide what generalises.</div>
+    <div class="byline">
+      <span class="authors">Konstantina Paschou&nbsp;&nbsp; Georgios Kesoglidis&nbsp;&nbsp; Theocharis Angelidis</span>
+      <span class="sup">Supervisor &nbsp;<b>Prof. Grigorios Tsoumakas</b></span>
+    </div>
+    <div class="accent-bar"></div>
+  </header>
+
+  <!-- ================= KPI STRIP ================= -->
+  <section class="kpi-strip">
+    <div class="kpi win">
+      <div class="ds">DILI</div>
+      <div class="delta">+0.043</div>
+      <div class="verdict">GNN wins</div>
+      <div class="vs">GIN 0.870 &nbsp;vs&nbsp; RF 0.827</div>
+    </div>
+    <div class="kpi win">
+      <div class="ds">ClinTox</div>
+      <div class="delta">+0.020</div>
+      <div class="verdict">GNN wins</div>
+      <div class="vs">GIN 0.820 &nbsp;vs&nbsp; XGB 0.800</div>
+    </div>
+    <div class="kpi loss">
+      <div class="ds">AMES</div>
+      <div class="delta">−0.012</div>
+      <div class="verdict">Classical wins</div>
+      <div class="vs">RF 0.792 &nbsp;vs&nbsp; GIN 0.780</div>
+    </div>
+    <div class="kpi loss">
+      <div class="ds">hERG</div>
+      <div class="delta">−0.018</div>
+      <div class="verdict">Classical wins</div>
+      <div class="vs">RF 0.798 &nbsp;vs&nbsp; GINE 0.780</div>
+    </div>
+    <div class="kpi kpi-note">
+      <div class="ds">LD50 regression</div>
+      <div class="delta">−0.050</div>
+      <p>Random splits look promising. Scaffold splits send every GNN below zero.</p>
+    </div>
+  </section>
+
+  <!-- ================= ROW: STUDY + MAIN RESULT ================= -->
+  <section class="grid" style="grid-template-columns:1fr 1.42fr; margin-bottom:6mm;">
+
+    <!-- The Study -->
+    <div class="panel flush">
+      <div class="sec-head">
+        <div class="sec-idx">1</div>
+        <div class="sec-title">Benchmark Design<small>Four molecular representations, one protocol</small></div>
+      </div>
+      <p class="lead">We compare fingerprints, a frozen SMILES encoder, 2D GNNs and 3D SchNet under one scaffold split protocol.</p>
+
+      <figure style="margin:4mm 0 2mm;">
+        <div class="pipeline"><svg viewBox="0 0 1200 430" xmlns="http://www.w3.org/2000/svg" font-family="Poppins, DejaVu Sans, sans-serif">
+<text x="145" y="36" text-anchor="middle" font-size="23" font-weight="700" fill="#2C7A8C">SMILES Input</text>
+<text x="445" y="36" text-anchor="middle" font-size="23" font-weight="700" fill="#2C7A8C">Molecular Graph</text>
+<text x="775" y="36" text-anchor="middle" font-size="23" font-weight="700" fill="#2C7A8C">GNN Layers</text>
+<text x="1072" y="36" text-anchor="middle" font-size="23" font-weight="700" fill="#E0613B">Prediction</text>
+<path d="M292 212 l26 0 m-9 -9 l9 9 l-9 9" stroke="#2C7A8C" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M610 212 l26 0 m-9 -9 l9 9 l-9 9" stroke="#2C7A8C" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M918 212 l26 0 m-9 -9 l9 9 l-9 9" stroke="#2C7A8C" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="50" y="150" width="195" height="46" rx="9" fill="#F1EADB" stroke="#D9CDB4" stroke-width="1.5"/>
+<text x="147" y="180" text-anchor="middle" font-size="19" font-family="DejaVu Sans Mono, monospace" fill="#1E2D36">CC(=O)Oc1ccccc1</text>
+<text x="147" y="232" text-anchor="middle" font-size="19" font-style="italic" fill="#6B7B85">Aspirin</text>
+<line x1="418.0" y1="160.5" x2="367.8" y2="189.5" stroke="#3A5560" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="422.0" y1="167.5" x2="371.8" y2="196.5" stroke="#3A5560" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="369.8" y1="193.0" x2="369.8" y2="251.0" stroke="#3A5560" stroke-width="4.5" stroke-linecap="round"/>
+<line x1="367.8" y1="254.5" x2="418.0" y2="283.5" stroke="#3A5560" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="371.8" y1="247.5" x2="422.0" y2="276.5" stroke="#3A5560" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="420.0" y1="280.0" x2="470.2" y2="251.0" stroke="#3A5560" stroke-width="4.5" stroke-linecap="round"/>
+<line x1="474.2" y1="251.0" x2="474.2" y2="193.0" stroke="#3A5560" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="466.2" y1="251.0" x2="466.2" y2="193.0" stroke="#3A5560" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="470.2" y1="193.0" x2="420.0" y2="164.0" stroke="#3A5560" stroke-width="4.5" stroke-linecap="round"/>
+<line x1="470.2" y1="251.0" x2="516.0" y2="247.0" stroke="#3A5560" stroke-width="4.5" stroke-linecap="round"/>
+<line x1="516.0" y1="247.0" x2="560.0" y2="224.0" stroke="#3A5560" stroke-width="4.5" stroke-linecap="round"/>
+<line x1="564.0" y1="224.0" x2="564.0" y2="178.0" stroke="#3A5560" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="556.0" y1="224.0" x2="556.0" y2="178.0" stroke="#3A5560" stroke-width="3.4" stroke-linecap="round"/>
+<circle cx="420.0" cy="164.0" r="17" fill="#FBF3E2" stroke="#C89A4E" stroke-width="2.6"/>
+<text x="420.0" y="169.0" text-anchor="middle" font-size="15" font-weight="700" fill="#1E2D36">C</text>
+<circle cx="369.8" cy="193.0" r="17" fill="#FBF3E2" stroke="#C89A4E" stroke-width="2.6"/>
+<text x="369.8" y="198.0" text-anchor="middle" font-size="15" font-weight="700" fill="#1E2D36">C</text>
+<circle cx="369.8" cy="251.0" r="17" fill="#FBF3E2" stroke="#C89A4E" stroke-width="2.6"/>
+<text x="369.8" y="256.0" text-anchor="middle" font-size="15" font-weight="700" fill="#1E2D36">C</text>
+<circle cx="420.0" cy="280.0" r="17" fill="#FBF3E2" stroke="#C89A4E" stroke-width="2.6"/>
+<text x="420.0" y="285.0" text-anchor="middle" font-size="15" font-weight="700" fill="#1E2D36">C</text>
+<circle cx="470.2" cy="251.0" r="17" fill="#FBF3E2" stroke="#C89A4E" stroke-width="2.6"/>
+<text x="470.2" y="256.0" text-anchor="middle" font-size="15" font-weight="700" fill="#1E2D36">C</text>
+<circle cx="470.2" cy="193.0" r="17" fill="#FBF3E2" stroke="#C89A4E" stroke-width="2.6"/>
+<text x="470.2" y="198.0" text-anchor="middle" font-size="15" font-weight="700" fill="#1E2D36">C</text>
+<circle cx="516.0" cy="247.0" r="17" fill="#FBF3E2" stroke="#C89A4E" stroke-width="2.6"/>
+<text x="516.0" y="252.0" text-anchor="middle" font-size="15" font-weight="700" fill="#1E2D36">O</text>
+<circle cx="560.0" cy="224.0" r="17" fill="#FBF3E2" stroke="#C89A4E" stroke-width="2.6"/>
+<text x="560.0" y="229.0" text-anchor="middle" font-size="15" font-weight="700" fill="#1E2D36">C</text>
+<circle cx="560.0" cy="178.0" r="17" fill="#FBF3E2" stroke="#C89A4E" stroke-width="2.6"/>
+<text x="560.0" y="183.0" text-anchor="middle" font-size="15" font-weight="700" fill="#1E2D36">O</text>
+<line x1="705" y1="152" x2="775" y2="152" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="152" x2="775" y2="188" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="152" x2="775" y2="224" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="152" x2="775" y2="260" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="152" x2="775" y2="296" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="188" x2="775" y2="152" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="188" x2="775" y2="188" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="188" x2="775" y2="224" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="188" x2="775" y2="260" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="188" x2="775" y2="296" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="224" x2="775" y2="152" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="224" x2="775" y2="188" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="224" x2="775" y2="224" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="224" x2="775" y2="260" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="224" x2="775" y2="296" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="260" x2="775" y2="152" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="260" x2="775" y2="188" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="260" x2="775" y2="224" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="260" x2="775" y2="260" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="260" x2="775" y2="296" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="296" x2="775" y2="152" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="296" x2="775" y2="188" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="296" x2="775" y2="224" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="296" x2="775" y2="260" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="705" y1="296" x2="775" y2="296" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="152" x2="845" y2="152" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="152" x2="845" y2="188" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="152" x2="845" y2="224" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="152" x2="845" y2="260" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="152" x2="845" y2="296" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="188" x2="845" y2="152" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="188" x2="845" y2="188" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="188" x2="845" y2="224" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="188" x2="845" y2="260" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="188" x2="845" y2="296" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="224" x2="845" y2="152" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="224" x2="845" y2="188" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="224" x2="845" y2="224" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="224" x2="845" y2="260" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="224" x2="845" y2="296" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="260" x2="845" y2="152" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="260" x2="845" y2="188" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="260" x2="845" y2="224" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="260" x2="845" y2="260" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="260" x2="845" y2="296" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="296" x2="845" y2="152" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="296" x2="845" y2="188" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="296" x2="845" y2="224" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="296" x2="845" y2="260" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<line x1="775" y1="296" x2="845" y2="296" stroke="#BBC3C6" stroke-width="0.7" opacity="0.55"/>
+<ellipse cx="705" cy="152" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="705" cy="188" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="705" cy="224" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="705" cy="260" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="705" cy="296" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="775" cy="152" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="775" cy="188" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="775" cy="224" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="775" cy="260" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="775" cy="296" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="845" cy="152" rx="12" ry="15" fill="#1C5D6E" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="845" cy="188" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="845" cy="224" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="845" cy="260" rx="12" ry="15" fill="#BFD8DC" stroke="#FFFFFF" stroke-width="1.5"/>
+<ellipse cx="845" cy="296" rx="12" ry="15" fill="#1C5D6E" stroke="#FFFFFF" stroke-width="1.5"/>
+<text x="705" y="335" text-anchor="middle" font-size="14" fill="#6B7B85">Input</text>
+<text x="775" y="335" text-anchor="middle" font-size="14" fill="#6B7B85">Layer 1</text>
+<text x="845" y="335" text-anchor="middle" font-size="14" fill="#6B7B85">Layer 2</text>
+<rect x="958" y="118" width="228" height="92" rx="12" fill="#FBE6DE" stroke="#E0613B" stroke-width="3"/>
+<text x="1072" y="158" text-anchor="middle" font-size="22" font-weight="700" fill="#C24A28">TOXIC</text>
+<text x="1072" y="190" text-anchor="middle" font-size="17" fill="#C24A28">p = 0.84</text>
+<rect x="958" y="232" width="228" height="92" rx="12" fill="#DCEFE2" stroke="#1F7A57" stroke-width="3"/>
+<text x="1072" y="272" text-anchor="middle" font-size="22" font-weight="700" fill="#1F7A57">NON-TOXIC</text>
+<text x="1072" y="304" text-anchor="middle" font-size="17" fill="#1F7A57">p = 0.12</text>
+<text x="147" y="384" text-anchor="middle" font-size="15" fill="#6B7B85">Atoms &amp; bonds</text>
+<text x="147" y="406" text-anchor="middle" font-size="15" fill="#6B7B85">as text tokens</text>
+<text x="430" y="384" text-anchor="middle" font-size="15" fill="#6B7B85">Node features</text>
+<text x="430" y="406" text-anchor="middle" font-size="15" fill="#6B7B85">+ bond connectivity</text>
+<text x="775" y="384" text-anchor="middle" font-size="15" fill="#6B7B85">Message passing</text>
+<text x="775" y="406" text-anchor="middle" font-size="15" fill="#6B7B85">aggregates neighbours</text>
+<text x="1072" y="384" text-anchor="middle" font-size="15" fill="#6B7B85">Per-molecule</text>
+<text x="1072" y="406" text-anchor="middle" font-size="15" fill="#6B7B85">toxicity score</text>
+</svg></div>
+        <figcaption>Same molecules, four representation families, one evaluation protocol.</figcaption>
+      </figure>
+
+      <div class="ladder">
+        <div class="rung"><div class="tag c1">Classical</div><div class="desc"><b>RF and XGBoost</b> on Morgan fingerprints</div></div>
+        <div class="rung"><div class="tag c2">Language</div><div class="desc"><b>ChemBERTa</b> frozen SMILES features</div></div>
+        <div class="rung"><div class="tag c3">2D Graph</div><div class="desc"><b>GCN, GIN, GAT, GraphSAGE and GINE</b></div></div>
+        <div class="rung"><div class="tag c4">3D Graph</div><div class="desc"><b>SchNet</b> on ETKDG conformers</div></div>
+      </div>
+
+      <div class="proto">
+        <b>Data</b> &nbsp;5 TDC toxicity tasks plus Tox21.&nbsp;
+        <b>Protocol</b> &nbsp;Bemis Murcko scaffold split, 3 seeds, 70/10/20.&nbsp;
+        <b>Metric</b> &nbsp;AUROC, or R2 for LD50.
+      </div>
+      <div class="spacer"></div>
+    </div>
+
+    <!-- Main Result -->
+    <div class="panel flush">
+      <div class="sec-head">
+        <div class="sec-idx">2</div>
+        <div class="sec-title">Task Regime Map<small>Best graph model minus best fingerprint baseline</small></div>
+      </div>
+      <figure style="margin-top:1mm;">
+        <img src="assets/main_task_delta_v03.png" alt="Diverging bar chart of best GNN minus best classical AUROC per dataset">
+        <figcaption>Difference between the best graph model and the best fingerprint baseline for each task.</figcaption>
+      </figure>
+      <p style="margin-top:5mm;"><b>Two regimes appear.</b> <span class="teal-t">GIN leads DILI and ClinTox.</span> <span class="coral-t">RF and XGBoost lead AMES and hERG.</span></p>
+      <div class="take"><b>Model choice follows the task regime.</b> Size, balance and chemistry matter more than architecture novelty.</div>
+      <div class="spacer"></div>
+    </div>
+  </section>
+
+  <!-- ================= ROW: FULL BENCHMARK ================= -->
+  <section class="panel" style="margin-bottom:6mm;">
+    <div class="sec-head">
+      <div class="sec-idx">3</div>
+      <div class="sec-title">Full Benchmark<small>8 methods, 5 datasets, one scaffold split protocol</small></div>
+    </div>
+    <div class="grid" style="grid-template-columns:1.62fr 1fr; align-items:center;">
+      <figure>
+        <img src="assets/benchmark_heatmap_v03.png" alt="Heatmap of 8 methods across 5 datasets">
+      </figure>
+      <div>
+        <p class="lead" style="margin-bottom:4mm;"><b>The heatmap keeps the benchmark honest.</b> It shows graph wins, fingerprint wins and negative LD50 R2 in one view.</p>
+        <ul class="tight">
+          <li><b>GIN is strongest on DILI and ClinTox.</b> RF is strongest on AMES, hERG and LD50.</li>
+          <li><b>Frozen ChemBERTa trails compact baselines</b> on every classification task.</li>
+        </ul>
+        <div class="take"><b>The protocol matters.</b> Scaffold splits make LD50 a warning rather than a win.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ROW: THREE DEEP DIVES ================= -->
+  <section class="grid" style="grid-template-columns:repeat(3,1fr); margin-bottom:6mm;">
+
+    <!-- 4A LD50 leakage -->
+    <div class="panel flush">
+      <div class="sec-head">
+        <div class="sec-idx coral">4A</div>
+        <div class="sec-title" style="font-size:23pt;">LD50 Exposes Split Leakage</div>
+      </div>
+      <figure class="ddfig"><img src="assets/ld50_split_leakage_v02.png" alt="LD50 R-squared under random vs scaffold splits"></figure>
+      <p style="margin-top:4mm;">Random splits give GIN R2 about 0.49. Scaffold splits send every GNN below zero.</p>
+      <div class="take coral"><b>LD50 is a split sensitivity warning.</b> Scaffold splitting is the realistic test.</div>
+      <div class="spacer"></div>
+    </div>
+
+    <!-- 4B 3D geometry -->
+    <div class="panel flush">
+      <div class="sec-head">
+        <div class="sec-idx">4B</div>
+        <div class="sec-title" style="font-size:23pt;">What 3D Geometry Adds</div>
+      </div>
+      <figure class="ddfig"><img src="assets/schnet_vs_gine_v03.png" alt="SchNet 3D versus GINE 2D plus bonds AUROC"></figure>
+      <p style="margin-top:4mm;"><b>SchNet trails GINE on ClinTox and AMES.</b> Geometry does not improve ranking accuracy here.</p>
+      <div class="take"><b>Use 3D as a reliability layer.</b> Prediction spread across conformers flags molecules with unstable scores.</div>
+      <div class="spacer"></div>
+    </div>
+
+    <!-- 4C multitask -->
+    <div class="panel flush">
+      <div class="sec-head">
+        <div class="sec-idx">4C</div>
+        <div class="sec-title" style="font-size:23pt;">Tox21 Transfer Is Selective</div>
+      </div>
+      <figure class="ddfig"><img src="assets/tox21_transfer_v03.png" alt="Multi task minus single task AUROC per Tox21 endpoint"></figure>
+      <p style="margin-top:4mm;">A shared GIN backbone drops macro AUROC by 0.024. Gains are limited to a few related receptor assays.</p>
+      <div class="take coral"><b>Shared representation helps only when assays share biology.</b> Otherwise the model sees negative transfer.</div>
+      <div class="spacer"></div>
+    </div>
+  </section>
+
+  <!-- ================= CONCLUSIONS ================= -->
+  <section class="concl">
+    <div class="concl-head">
+      <div class="sec-idx" style="background:#6FB7C4;color:#16323a;">5</div>
+      <div class="sec-title" style="color:#fff;">Conclusions</div>
+    </div>
+    <div class="concl-grid">
+      <div class="cc"><div class="n">1</div><div class="t"><b>Task regime drives model choice.</b> Graph learning helps on scarce or imbalanced endpoints.</div></div>
+      <div class="cc"><div class="n">2</div><div class="t"><b>Scaffold splits prevent false wins.</b> LD50 changes from promising to unreliable.</div></div>
+      <div class="cc"><div class="n">3</div><div class="t"><b>3D adds reliability evidence.</b> SchNet accuracy trails GINE, but conformer spread flags unstable predictions.</div></div>
+      <div class="cc"><div class="n">4</div><div class="t"><b>Transfer is selective.</b> Multitask learning helps only when endpoints share useful signal.</div></div>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <section class="foot">
+    <div class="refs">
+      <h4>References</h4>
+      <ol>
+        <li>Huang et al. <i>Therapeutics Data Commons.</i> NeurIPS 2021.</li>
+        <li>Kipf &amp; Welling. <i>GCN.</i> ICLR 2017.</li>
+        <li>Xu et al. <i>GIN.</i> ICLR 2019.</li>
+        <li>Velickovic et al. <i>GAT.</i> ICLR 2018.</li>
+        <li>Hamilton et al. <i>GraphSAGE.</i> NeurIPS 2017.</li>
+        <li>Schutt et al. <i>SchNet.</i> NeurIPS 2017.</li>
+        <li>Chithrananda et al. <i>ChemBERTa.</i> arXiv 2020.</li>
+        <li>Rogers &amp; Hahn. <i>ECFP.</i> J. Chem. Inf. Model. 2010.</li>
+      </ol>
+    </div>
+    <div class="meta">
+      <h4>Setup &amp; Reproducibility</h4>
+      <p>RDKit featurisation, PyTorch Geometric, scikit learn and XGBoost. All runs use a shared Murcko scaffold splitter for cross method comparability. Per run weights and metrics are checkpointed for reproducibility.</p>
+      <p class="stamp">Graph &amp; Geometric Deep Learning for Drug Toxicity Prediction, AUTH, 2025 2026</p>
+    </div>
+    <div class="qrbox">
+      <img src="assets/microsite_qr_v03.png" alt="QR code linking to the interactive microsite">
+      <div class="qrcap">Scan for the<br><b>interactive microsite</b></div>
+      <div class="qrurl">thekonang.github.io/<br>AML_Microsite</div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
