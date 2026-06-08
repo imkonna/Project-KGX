@@ -39,7 +39,7 @@
       radial-gradient(900px 600px at 6% 102%, rgba(224,97,59,.05), transparent 60%),
       var(--paper);
     position:relative;
-    padding:20mm 24mm 16mm 24mm;
+    padding:13mm 22mm 10mm 22mm;
     display:flex; flex-direction:column;
     overflow:hidden;
   }
@@ -75,51 +75,51 @@
   /* ---------- typographic system ---------- */
   .serif{ font-family:'Lora','DejaVu Serif',serif; }
   .eyebrow{
-    font-size:12.5pt; font-weight:600; letter-spacing:.28em;
+    font-size:14pt; font-weight:600; letter-spacing:.26em;
     text-transform:uppercase; color:var(--teal-deep);
   }
   h1.title{
     font-family:'Lora',serif; font-weight:700;
-    font-size:60pt; line-height:1.02; letter-spacing:-.5pt;
-    margin:4mm 0 0; color:var(--ink);
+    font-size:72pt; line-height:1.0; letter-spacing:-.6pt;
+    margin:3mm 0 0; color:var(--ink);
   }
   .thesis{
     font-family:'Lora',serif; font-style:italic; font-weight:500;
-    font-size:20pt; line-height:1.3; color:var(--ink-soft);
-    margin:4mm 0 0; max-width:540mm;
+    font-size:22pt; line-height:1.26; color:var(--ink-soft);
+    margin:3mm 0 0; max-width:560mm;
   }
   .byline{
-    margin-top:5mm; display:flex; align-items:baseline; gap:0 14mm; flex-wrap:wrap;
-    font-size:16pt;
+    margin-top:4mm; display:flex; align-items:baseline; gap:0 14mm; flex-wrap:wrap;
+    font-size:18pt;
   }
   .byline .authors{ font-weight:600; color:var(--ink); letter-spacing:.01em; }
-  .byline .sup{ color:var(--muted); font-size:13.5pt; letter-spacing:.04em; }
+  .byline .sup{ color:var(--muted); font-size:15pt; letter-spacing:.04em; }
   .byline .sup b{ color:var(--ink-soft); font-weight:600; }
 
   /* section scaffolding */
-  .sec-head{ display:flex; align-items:center; gap:6mm; margin:0 0 5mm; }
+  .sec-head{ display:flex; align-items:center; gap:6mm; margin:0 0 4mm; }
   .sec-idx{
-    font-family:'Lora',serif; font-weight:700; font-size:17pt;
+    font-family:'Lora',serif; font-weight:700; font-size:18pt;
     width:11mm; height:11mm; flex:0 0 auto; border-radius:50%;
     display:flex; align-items:center; justify-content:center;
     color:#fff; background:var(--teal-deep);
   }
   .sec-idx.coral{ background:var(--coral-deep); }
   .sec-title{
-    font-family:'Lora',serif; font-weight:600; font-size:28pt;
+    font-family:'Lora',serif; font-weight:600; font-size:33pt;
     line-height:1.05; color:var(--ink);
   }
   .sec-title small{ display:block; font-family:'Montserrat','Poppins',sans-serif;
-    font-weight:500; font-size:13.5pt; letter-spacing:.035em; color:var(--muted); margin-top:1.5mm; }
+    font-weight:500; font-size:15pt; letter-spacing:.03em; color:var(--muted); margin-top:1.5mm; }
 
   .panel{
     background:var(--panel); border:0.5pt solid rgba(218,210,194,.86);
-    border-radius:5mm; padding:8mm 9mm 7mm;
+    border-radius:5mm; padding:7mm 8mm 6mm;
     box-shadow:0 2mm 7mm rgba(30,45,54,.05);
   }
 
-  p{ font-size:16.2pt; line-height:1.42; margin:0 0 3.5mm; color:var(--ink-soft); }
-  p.lead{ font-size:18pt; line-height:1.38; color:var(--ink); }
+  p{ font-size:22pt; line-height:1.32; margin:0 0 3.2mm; color:var(--ink-soft); }
+  p.lead{ font-size:24pt; line-height:1.28; color:var(--ink); }
   b,strong{ color:var(--ink); font-weight:600; }
   .teal-t{ color:var(--teal-deep); font-weight:600; }
   .coral-t{ color:var(--coral-deep); font-weight:600; }
@@ -129,16 +129,16 @@
   .pipeline svg{ width:100%; height:auto; display:block; }
 
   figure img{ width:100%; height:auto; display:block; border-radius:2mm; }
-  .ddfig img{ width:auto; max-width:100%; max-height:222mm; margin:0 auto; }
+  .ddfig img{ width:auto; max-width:100%; max-height:206mm; margin:0 auto; }
   figcaption{
-    font-size:13pt; line-height:1.38; color:var(--muted);
+    font-size:17pt; line-height:1.32; color:var(--muted);
     margin-top:3mm; font-style:italic;
   }
 
-  .grid{ display:grid; gap:8mm; }
+  .grid{ display:grid; gap:7mm; }
 
   /* header band */
-  .header{ position:relative; padding-bottom:6mm; }
+  .header{ position:relative; padding-bottom:4mm; }
   .accent-bar{
     position:absolute; left:0; bottom:0; height:1.6mm; width:100%;
     background:linear-gradient(90deg,var(--teal) 0%, var(--teal-deep) 38%, var(--coral) 100%);
@@ -147,94 +147,94 @@
   .helix{ display:none; }
 
   /* KPI strip */
-  .kpi-strip{ display:grid; grid-template-columns:repeat(4,1fr) 1.35fr; gap:6mm; margin:6mm 0 6mm; }
+  .kpi-strip{ display:grid; grid-template-columns:repeat(4,1fr) 1.35fr; gap:6mm; margin:5mm 0 5mm; }
   .kpi{
-    border-radius:4.5mm; padding:7mm 8mm 6.5mm; position:relative; overflow:hidden;
+    border-radius:4.5mm; padding:6mm 8mm 5.5mm; position:relative; overflow:hidden;
     border:0.5pt solid var(--line);
     box-shadow:0 2mm 7mm rgba(30,45,54,.07);
   }
   .kpi.win{ background:linear-gradient(160deg,#EAF2F3,#DCEAEC); border-color:#BcD6da; }
   .kpi.loss{ background:linear-gradient(160deg,#FBEAE3,#F6DDD2); border-color:#EAC2b2; }
-  .kpi .ds{ font-size:13.5pt; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); }
-  .kpi .delta{ font-family:'Lora',serif; font-weight:700; font-size:46pt; line-height:1; margin:3mm 0 1mm; }
+  .kpi .ds{ font-size:15pt; font-weight:600; letter-spacing:.13em; text-transform:uppercase; color:var(--ink-soft); }
+  .kpi .delta{ font-family:'Lora',serif; font-weight:700; font-size:50pt; line-height:1; margin:3mm 0 1mm; }
   .kpi.win .delta{ color:var(--teal-deep); }
   .kpi.loss .delta{ color:var(--coral-deep); }
-  .kpi .verdict{ font-size:12.5pt; font-weight:600; letter-spacing:.03em; }
+  .kpi .verdict{ font-size:14.5pt; font-weight:600; letter-spacing:.03em; }
   .kpi.win .verdict{ color:var(--teal); }
   .kpi.loss .verdict{ color:var(--coral); }
-  .kpi .vs{ font-size:12.5pt; color:var(--muted); margin-top:1.5mm; }
+  .kpi .vs{ font-size:14pt; color:var(--muted); margin-top:1.5mm; }
   .kpi-note{
     background:#21323b; color:#EAF0F1; border:none;
     display:flex; flex-direction:column; justify-content:center;
   }
   .kpi-note .ds{ color:#9FD0D9; }
-  .kpi-note .delta{ color:#fff; font-size:30pt; }
-  .kpi-note p{ color:#C9D6DA; font-size:13pt; margin:2mm 0 0; line-height:1.35; }
+  .kpi-note .delta{ color:#fff; font-size:34pt; }
+  .kpi-note p{ color:#C9D6DA; font-size:15pt; margin:2mm 0 0; line-height:1.3; }
 
   /* method ladder */
-  .ladder{ margin:4mm 0 0; }
-  .rung{ display:flex; gap:4mm; align-items:flex-start; padding:3mm 0; border-top:0.5pt solid var(--line); }
+  .ladder{ margin:3mm 0 0; }
+  .rung{ display:flex; gap:4mm; align-items:flex-start; padding:2.4mm 0; border-top:0.5pt solid var(--line); }
   .rung:first-child{ border-top:none; }
   .rung .tag{
-    flex:0 0 30mm; font-size:11pt; font-weight:700; letter-spacing:.04em;
+    flex:0 0 32mm; font-size:12.5pt; font-weight:700; letter-spacing:.03em;
     text-transform:uppercase; padding-top:.5mm;
   }
   .rung .tag.c1{ color:var(--coral-deep); }
   .rung .tag.c2{ color:var(--gold); }
   .rung .tag.c3{ color:var(--teal-deep); }
   .rung .tag.c4{ color:var(--teal); }
-  .rung .desc{ font-size:14.3pt; line-height:1.35; color:var(--ink-soft); }
+  .rung .desc{ font-size:19.5pt; line-height:1.28; color:var(--ink-soft); }
   .rung .desc b{ color:var(--ink); }
 
   .proto{
-    margin-top:5mm; padding:5mm 6mm; border-radius:3.5mm;
+    margin-top:4mm; padding:4.5mm 6mm; border-radius:3.5mm;
     background:var(--paper2); border:0.5pt solid var(--line);
-    font-size:13.7pt; line-height:1.42; color:var(--ink-soft);
+    font-size:18pt; line-height:1.32; color:var(--ink-soft);
   }
   .proto b{ color:var(--ink); }
 
   /* takeaway callout */
   .take{
-    border-left:2.2mm solid var(--teal); padding:3mm 0 3mm 6mm; margin-top:4mm;
-    font-size:15pt; line-height:1.38; color:var(--ink);
+    border-left:2.2mm solid var(--teal); padding:2.5mm 0 2.5mm 6mm; margin-top:3.5mm;
+    font-size:20pt; line-height:1.3; color:var(--ink);
   }
   .take.coral{ border-left-color:var(--coral); }
   .take b{ font-weight:600; }
 
   ul.tight{ margin:1mm 0 0; padding-left:6mm; }
-  ul.tight li{ font-size:15.2pt; line-height:1.4; color:var(--ink-soft); margin-bottom:2.8mm; }
+  ul.tight li{ font-size:20pt; line-height:1.3; color:var(--ink-soft); margin-bottom:2.4mm; }
   ul.tight li b{ color:var(--ink); }
 
   /* conclusions */
-  .concl{ background:#21323b; border-radius:5mm; padding:6mm 10mm; color:#EAF0F1; }
-  .concl-head{ display:flex; align-items:center; gap:5mm; margin-bottom:5mm; }
+  .concl{ background:#21323b; border-radius:5mm; padding:5mm 10mm; color:#EAF0F1; }
+  .concl-head{ display:flex; align-items:center; gap:5mm; margin-bottom:4mm; }
   .concl-head .sec-title{ color:#fff; }
-  .concl-grid{ display:grid; grid-template-columns:1fr 1fr; gap:5mm 11mm; }
+  .concl-grid{ display:grid; grid-template-columns:1fr 1fr; gap:4mm 11mm; }
   .cc{ display:flex; gap:5mm; }
-  .cc .n{ font-family:'Lora',serif; font-weight:700; font-size:30pt; line-height:1;
+  .cc .n{ font-family:'Lora',serif; font-weight:700; font-size:34pt; line-height:1;
     color:#6FB7C4; flex:0 0 auto; }
-  .cc .t{ font-size:16pt; line-height:1.38; color:#DCE6E8; }
+  .cc .t{ font-size:21pt; line-height:1.28; color:#DCE6E8; }
   .cc .t b{ color:#fff; font-weight:600; }
 
   /* footer / references */
-  .foot{ display:grid; grid-template-columns:1.45fr 1fr 0.46fr; gap:9mm; margin-top:6mm; align-items:start; }
+  .foot{ display:grid; grid-template-columns:1.45fr 1fr 0.46fr; gap:9mm; margin-top:5mm; align-items:start; }
   .qrbox{ display:flex; flex-direction:column; align-items:center; text-align:center;
     border-left:0.5pt solid var(--line); padding-left:8mm; }
   .qrbox img{ width:34mm; height:34mm; display:block; border:0.5pt solid var(--line);
     border-radius:2mm; padding:1.5mm; background:#fff; }
-  .qrbox .qrcap{ font-size:11pt; line-height:1.35; color:var(--ink-soft); margin-top:3mm; }
+  .qrbox .qrcap{ font-size:13pt; line-height:1.3; color:var(--ink-soft); margin-top:3mm; }
   .qrbox .qrcap b{ color:var(--teal-deep); }
-  .qrbox .qrurl{ font-size:9.5pt; color:var(--muted); margin-top:1.5mm; letter-spacing:.01em;
+  .qrbox .qrurl{ font-size:11pt; color:var(--muted); margin-top:1.5mm; letter-spacing:.01em;
     font-family:'DejaVu Sans Mono',monospace; }
   .refs h4, .meta h4{
-    font-size:11pt; font-weight:700; letter-spacing:.2em; text-transform:uppercase;
+    font-size:13pt; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
     color:var(--teal-deep); margin:0 0 3mm;
   }
   .refs ol{ margin:0; padding-left:6mm; columns:2; column-gap:9mm; }
-  .refs li{ font-size:11.2pt; line-height:1.32; color:var(--ink-soft); margin-bottom:2mm; break-inside:avoid; }
+  .refs li{ font-size:13.5pt; line-height:1.3; color:var(--ink-soft); margin-bottom:2mm; break-inside:avoid; }
   .refs li i{ color:var(--ink); font-style:italic; }
-  .meta p{ font-size:12pt; line-height:1.4; color:var(--ink-soft); margin:0 0 2.5mm; }
-  .meta .stamp{ font-family:'Lora',serif; font-style:italic; font-size:13pt; color:var(--muted); }
+  .meta p{ font-size:14pt; line-height:1.34; color:var(--ink-soft); margin:0 0 2.5mm; }
+  .meta .stamp{ font-family:'Lora',serif; font-style:italic; font-size:15pt; color:var(--muted); }
 
   .flush{ display:flex; flex-direction:column; height:100%; }
   .spacer{ flex:1 1 auto; }
@@ -306,7 +306,7 @@
   </section>
 
   <!-- ================= ROW: STUDY + MAIN RESULT ================= -->
-  <section class="grid" style="grid-template-columns:1fr 1.42fr; margin-bottom:6mm;">
+  <section class="grid" style="grid-template-columns:1fr 1.42fr; margin-bottom:4mm;">
 
     <!-- The Study -->
     <div class="panel flush">
@@ -477,7 +477,7 @@
   </section>
 
   <!-- ================= ROW: FULL BENCHMARK ================= -->
-  <section class="panel" style="margin-bottom:6mm;">
+  <section class="panel" style="margin-bottom:4mm;">
     <div class="sec-head">
       <div class="sec-idx">3</div>
       <div class="sec-title">Full Benchmark<small>8 methods, 5 datasets, one scaffold split protocol</small></div>
@@ -498,13 +498,13 @@
   </section>
 
   <!-- ================= ROW: THREE DEEP DIVES ================= -->
-  <section class="grid" style="grid-template-columns:repeat(3,1fr); margin-bottom:6mm;">
+  <section class="grid" style="grid-template-columns:repeat(3,1fr); margin-bottom:4mm;">
 
     <!-- 4A LD50 leakage -->
     <div class="panel flush">
       <div class="sec-head">
         <div class="sec-idx coral">4A</div>
-        <div class="sec-title" style="font-size:23pt;">LD50 Exposes Split Leakage</div>
+        <div class="sec-title" style="font-size:27pt;">LD50 Exposes Split Leakage</div>
       </div>
       <figure class="ddfig"><img src="assets/ld50_split_leakage_v02.png" alt="LD50 R-squared under random vs scaffold splits"></figure>
       <p style="margin-top:4mm;">Random splits give GIN R2 about 0.49. Scaffold splits send every GNN below zero.</p>
@@ -516,7 +516,7 @@
     <div class="panel flush">
       <div class="sec-head">
         <div class="sec-idx">4B</div>
-        <div class="sec-title" style="font-size:23pt;">What 3D Geometry Adds</div>
+        <div class="sec-title" style="font-size:27pt;">What 3D Geometry Adds</div>
       </div>
       <figure class="ddfig"><img src="assets/schnet_vs_gine_v03.png" alt="SchNet 3D versus GINE 2D plus bonds AUROC"></figure>
       <p style="margin-top:4mm;"><b>SchNet trails GINE on ClinTox and AMES.</b> Geometry does not improve ranking accuracy here.</p>
@@ -528,7 +528,7 @@
     <div class="panel flush">
       <div class="sec-head">
         <div class="sec-idx">4C</div>
-        <div class="sec-title" style="font-size:23pt;">Tox21 Transfer Is Selective</div>
+        <div class="sec-title" style="font-size:27pt;">Tox21 Transfer Is Selective</div>
       </div>
       <figure class="ddfig"><img src="assets/tox21_transfer_v03.png" alt="Multi task minus single task AUROC per Tox21 endpoint"></figure>
       <p style="margin-top:4mm;">A shared GIN backbone drops macro AUROC by 0.024. Gains are limited to a few related receptor assays.</p>
