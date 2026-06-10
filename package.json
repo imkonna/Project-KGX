@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "render:poster": "node poster/render_poster.js"
+  },
+  "dependencies": {
+    "puppeteer-core": "^25.1.0"
+  }
+}

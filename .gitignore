@@ -6,3 +6,20 @@ models/*
 
 # Ignore environment variables file
 .env
+node_modules/
+.tmp/
+
+# Personal local Claude Code settings
+.claude/settings.local.json
+
+# Poster section review crops (scratch)
+poster/section_review/
+
+# Poster generated exports and scratch history
+poster/compiled/
+poster/archive/
+poster/concepts/
+poster/versions/
+
+# Keep tracked PDFs stageable, but ignore new ad hoc PDFs.
+*.pdf
